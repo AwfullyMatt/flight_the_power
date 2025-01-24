@@ -11,8 +11,7 @@ impl Plugin for SettingsPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Startup, startup);
 
-        app.insert_resource(Settings::load())
-            .insert_resource(Resolutions::init());
+        app.insert_resource(Settings::load());
     }
 }
 
@@ -20,7 +19,7 @@ fn startup() {}
 
 #[derive(Default, Deserialize, Serialize, Resource)]
 pub struct Settings {
-    pub resolution: Vec2,
+    pub resolution: Resolution,
     pub monitor: usize,
 }
 impl Settings {
@@ -41,18 +40,56 @@ impl Settings {
     }
 }
 
-#[derive(Resource, Default)]
-pub struct Resolutions {
-    sd: Vec2,  // 480p
-    hd: Vec2,  // 1080p
-    uhd: Vec2, // 2160p
+#[allow(dead_code)]
+#[derive(Default, Deserialize, Serialize)]
+pub enum Resolution {
+    #[default]
+    SD, // 480p
+    HD,  // 1080p
+    UHD, // 2160p
 }
-impl Resolutions {
-    fn init() -> Self {
-        Resolutions {
-            sd: Vec2::new(640., 480.),
-            hd: Vec2::new(1920., 1080.),
-            uhd: Vec2::new(3840., 2160.),
+impl Resolution {
+    pub fn vec2(&self) -> Vec2 {
+        use Resolution::*;
+
+        match self {
+            SD => Vec2 { x: 640., y: 480. },
+            HD => Vec2 { x: 1920., y: 1080. },
+            UHD => Vec2 { x: 3840., y: 2160. },
+        }
+    }
+
+    pub fn scale(&self) -> f32 {
+        use Resolution::*;
+
+        match self {
+            SD => 2.0,
+            HD => 5.0,
+            UHD => 10.0,
+        }
+    }
+}
+
+#[allow(dead_code)]
+#[derive(Resource)]
+pub enum Pallette {
+    WHITE,
+    LIGHTER,
+    LIGHT,
+    DARK,
+    DARKER,
+    BLACK,
+}
+impl Pallette {
+    pub fn srgb(&self) -> Color {
+        use Pallette::*;
+        match self {
+            WHITE => Color::srgb(1., 1., 1.),
+            LIGHTER => Color::srgb(0.8275, 0.8275, 0.8275),
+            LIGHT => Color::srgb(0.06549, 0.06549, 0.06549),
+            DARK => Color::srgb(0.3647, 0.3647, 0.3647),
+            DARKER => Color::srgb(0.2118, 0.2118, 0.2118),
+            BLACK => Color::srgb(0., 0., 0.),
         }
     }
 }

@@ -49,14 +49,15 @@ fn startup(mut commands: Commands, mut query_window: Query<&mut Window>, setting
         // SET WINDOW RESOLUTION
         window
             .resolution
-            .set(settings.resolution.x, settings.resolution.y);
+            .set(settings.resolution.vec2().x, settings.resolution.vec2().y);
         // SET MONITOR SELECTION
         window
             .position
             .center(MonitorSelection::Index(settings.monitor));
         info!(
             "[INITIALIZED] Window Resolution : ({},{})",
-            settings.resolution.x, settings.resolution.y
+            settings.resolution.vec2().x,
+            settings.resolution.vec2().y
         );
     }
 }
