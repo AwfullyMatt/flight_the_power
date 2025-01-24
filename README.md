@@ -6,6 +6,6 @@ why look world when video game?..
 Created for the BigMode Game Jame '25  
 
 Contact:  
-Email - FlightThePower@proton.me
-BSky - AwfullyMatt
-GitHub - AwfullyMatt
+Email - FlightThePower@proton.me  
+BSky - AwfullyMatt  
+GitHub - AwfullyMatt  
