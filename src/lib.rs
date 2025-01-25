@@ -1,7 +1,9 @@
+mod loading;
 mod menu;
 mod settings;
 
 use bevy::prelude::*;
+use loading::LoadingPlugin;
 use menu::MenuPlugin;
 use settings::{Settings, SettingsPlugin};
 
@@ -34,9 +36,12 @@ impl Plugin for GamePlugin {
                 // PIXEL PERFECT
                 .set(ImagePlugin::default_nearest()),
         );
-        app.add_plugins((MenuPlugin, SettingsPlugin));
+        app.add_plugins((LoadingPlugin, MenuPlugin, SettingsPlugin));
 
         app.add_systems(Startup, startup);
+
+        app.init_state::<AppState>();
+        app.add_sub_state::<GameState>();
     }
 }
 
