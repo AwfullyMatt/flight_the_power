@@ -2,6 +2,8 @@ use bevy::{prelude::*, scene::ron::de::from_reader};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 
+use crate::AppState;
+
 pub struct SettingsPlugin;
 impl Plugin for SettingsPlugin {
     fn name(&self) -> &str {
@@ -9,13 +11,16 @@ impl Plugin for SettingsPlugin {
     }
 
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, startup);
+        app.add_systems(OnEnter(AppState::Settings), startup)
+            .add_systems(OnExit(AppState::Settings), cleanup)
+            .add_systems(
+                Update,
+                settings_button_interaction.run_if(in_state(AppState::Settings)),
+            );
 
         app.insert_resource(Settings::load());
     }
 }
-
-fn startup() {}
 
 #[derive(Default, Deserialize, Serialize, Resource)]
 pub struct Settings {
@@ -73,23 +78,195 @@ impl Resolution {
 #[allow(dead_code)]
 #[derive(Resource)]
 pub enum Pallette {
-    WHITE,
-    LIGHTER,
-    LIGHT,
-    DARK,
-    DARKER,
-    BLACK,
+    White,
+    Lighter,
+    Light,
+    Dark,
+    Darker,
+    Black,
 }
 impl Pallette {
     pub fn srgb(&self) -> Color {
         use Pallette::*;
         match self {
-            WHITE => Color::srgb(1., 1., 1.),
-            LIGHTER => Color::srgb(0.8275, 0.8275, 0.8275),
-            LIGHT => Color::srgb(0.06549, 0.06549, 0.06549),
-            DARK => Color::srgb(0.3647, 0.3647, 0.3647),
-            DARKER => Color::srgb(0.2118, 0.2118, 0.2118),
-            BLACK => Color::srgb(0., 0., 0.),
+            White => Color::srgb(1., 1., 1.),
+            Lighter => Color::srgb(0.8275, 0.8275, 0.8275),
+            Light => Color::srgb(0.06549, 0.06549, 0.06549),
+            Dark => Color::srgb(0.3647, 0.3647, 0.3647),
+            Darker => Color::srgb(0.2118, 0.2118, 0.2118),
+            Black => Color::srgb(0., 0., 0.),
+        }
+    }
+}
+
+#[derive(Component)]
+struct CleanupSettingsMenu;
+
+#[derive(Component)]
+pub enum SettingsMenuButton {
+    SD,
+    HD,
+    UHD,
+}
+
+fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let font = asset_server.load("fonts/PublicPixel.ttf");
+
+    commands
+        .spawn((
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::SpaceEvenly,
+                flex_direction: FlexDirection::Row,
+                ..default()
+            },
+            CleanupSettingsMenu,
+        ))
+        .with_children(|parent| {
+            parent
+                .spawn((Node {
+                    width: Val::Px(320.0),
+                    height: Val::Px(115.0),
+                    border: UiRect::all(Val::Px(10.0)),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                },))
+                .with_child((
+                    Text::new("RESOLUTION"),
+                    TextFont {
+                        font: font.clone(),
+                        font_size: 50.0,
+                        ..default()
+                    },
+                    TextColor(Pallette::Black.srgb()),
+                ));
+        })
+        .with_children(|parent| {
+            parent
+                .spawn((
+                    Node {
+                        width: Val::Px(320.0),
+                        height: Val::Px(115.0),
+                        border: UiRect::all(Val::Px(10.0)),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    Button,
+                    BorderColor(Pallette::Black.srgb()),
+                    BorderRadius::all(Val::Percent(10.0)),
+                    BackgroundColor(Pallette::Lighter.srgb()),
+                    SettingsMenuButton::SD,
+                ))
+                .with_child((
+                    Text::new("SD"),
+                    TextFont {
+                        font: font.clone(),
+                        font_size: 30.0,
+                        ..default()
+                    },
+                    TextColor(Pallette::Black.srgb()),
+                ));
+        })
+        .with_children(|parent| {
+            parent
+                .spawn((
+                    Node {
+                        width: Val::Px(320.0),
+                        height: Val::Px(115.0),
+                        border: UiRect::all(Val::Px(10.0)),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    Button,
+                    BorderColor(Pallette::Black.srgb()),
+                    BorderRadius::all(Val::Percent(10.0)),
+                    BackgroundColor(Pallette::Lighter.srgb()),
+                    SettingsMenuButton::HD,
+                ))
+                .with_child((
+                    Text::new("HD"),
+                    TextFont {
+                        font: font.clone(),
+                        font_size: 30.0,
+                        ..default()
+                    },
+                    TextColor(Pallette::Black.srgb()),
+                ));
+        })
+        .with_children(|parent| {
+            parent
+                .spawn((
+                    Node {
+                        width: Val::Px(320.0),
+                        height: Val::Px(115.0),
+                        border: UiRect::all(Val::Px(10.0)),
+                        justify_content: JustifyContent::Center,
+                        align_items: AlignItems::Center,
+                        ..default()
+                    },
+                    Button,
+                    BorderColor(Pallette::Black.srgb()),
+                    BorderRadius::all(Val::Percent(10.0)),
+                    BackgroundColor(Pallette::Lighter.srgb()),
+                    SettingsMenuButton::UHD,
+                ))
+                .with_child((
+                    Text::new("UHD"),
+                    TextFont {
+                        font: font.clone(),
+                        font_size: 30.0,
+                        ..default()
+                    },
+                    TextColor(Pallette::Black.srgb()),
+                ));
+        });
+}
+
+fn cleanup(mut commands: Commands, query_cleanup: Query<Entity, With<CleanupSettingsMenu>>) {
+    for entity in query_cleanup.iter() {
+        commands.entity(entity).despawn_recursive();
+        info!("[CLEANED] Settings Menu.");
+    }
+}
+
+fn settings_button_interaction(
+    mut interaction_query: Query<
+        (
+            &Interaction,
+            &mut BackgroundColor,
+            &mut BorderColor,
+            &Children,
+            &SettingsMenuButton,
+        ),
+        (Changed<Interaction>, With<SettingsMenuButton>),
+    >,
+    mut text_color_query: Query<&mut TextColor>,
+) {
+    for (interaction, mut background_color, mut border_color, children, _smb) in
+        &mut interaction_query
+    {
+        let mut text_color = text_color_query.get_mut(children[0]).unwrap();
+        match *interaction {
+            Interaction::None => {
+                background_color.0 = Pallette::Lighter.srgb();
+                border_color.0 = Pallette::Black.srgb();
+                text_color.0 = Pallette::Black.srgb();
+            }
+            Interaction::Hovered => {
+                background_color.0 = Pallette::Darker.srgb();
+                border_color.0 = Pallette::Black.srgb();
+                text_color.0 = Pallette::Black.srgb();
+            }
+            Interaction::Pressed => {
+                background_color.0 = Pallette::Darker.srgb();
+                border_color.0 = Pallette::Black.srgb();
+                text_color.0 = Pallette::Black.srgb();
+            }
         }
     }
 }

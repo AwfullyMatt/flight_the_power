@@ -12,7 +12,7 @@ impl Plugin for MenuPlugin {
     }
 
     fn build(&self, app: &mut App) {
-        app.add_systems(Startup, startup)
+        app.add_systems(OnEnter(AppState::Menu), startup)
             .add_systems(
                 Update,
                 menu_button_interaction.run_if(in_state(AppState::Menu)),
@@ -36,8 +36,9 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>, settings: Res
 
     // SPAWN BACKGROUND
     commands.spawn((
-        Sprite::from_image(asset_server.load("sprites/backgrounds/room.png")),
+        Sprite::from_image(asset_server.load("sprites/backgrounds/title.png")),
         Transform::from_scale(Vec3::splat(settings.resolution.scale())),
+        CleanupMainMenu,
     ));
 
     // SPAWN BUTTONS
@@ -58,21 +59,19 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>, settings: Res
         .with_children(|parent| {
             parent
                 .spawn((
-                    Button,
-                    MainMenuButton::Play,
                     Node {
                         width: Val::Px(320.0),
                         height: Val::Px(115.0),
-                        border: UiRect::all(Val::Px(5.0)),
-                        // horizontally center child text
+                        border: UiRect::all(Val::Px(10.0)),
                         justify_content: JustifyContent::SpaceEvenly,
-                        // vertically center child text
                         align_items: AlignItems::Center,
                         ..default()
                     },
-                    BorderColor(Color::BLACK),
-                    BorderRadius::all(Val::Percent(10.)),
-                    BackgroundColor(Pallette::DARK.srgb()),
+                    Button,
+                    BorderColor(Pallette::Black.srgb()),
+                    BorderRadius::all(Val::Percent(10.0)),
+                    BackgroundColor(Pallette::Lighter.srgb().into()),
+                    MainMenuButton::Play,
                 ))
                 .with_child((
                     Text::new("Play"),
@@ -81,27 +80,25 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>, settings: Res
                         font_size: 33.0,
                         ..default()
                     },
-                    TextColor(Pallette::LIGHT.srgb()),
+                    TextColor(Pallette::Black.srgb()),
                 ));
         })
         .with_children(|parent| {
             parent
                 .spawn((
-                    Button,
-                    MainMenuButton::Settings,
                     Node {
                         width: Val::Px(320.0),
                         height: Val::Px(115.0),
-                        border: UiRect::all(Val::Px(5.0)),
-                        // horizontally center child text
+                        border: UiRect::all(Val::Px(10.0)),
                         justify_content: JustifyContent::SpaceEvenly,
-                        // vertically center child text
                         align_items: AlignItems::Center,
                         ..default()
                     },
-                    BorderColor(Color::BLACK),
-                    BorderRadius::all(Val::Percent(10.)),
-                    BackgroundColor(Pallette::DARK.srgb()),
+                    Button,
+                    BorderColor(Pallette::Black.srgb()),
+                    BorderRadius::all(Val::Percent(10.0)),
+                    BackgroundColor(Pallette::Lighter.srgb().into()),
+                    MainMenuButton::Settings,
                 ))
                 .with_child((
                     Text::new("Settings"),
@@ -110,27 +107,25 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>, settings: Res
                         font_size: 33.0,
                         ..default()
                     },
-                    TextColor(Pallette::LIGHT.srgb()),
+                    TextColor(Pallette::Black.srgb()),
                 ));
         })
         .with_children(|parent| {
             parent
                 .spawn((
-                    Button,
-                    MainMenuButton::Exit,
                     Node {
                         width: Val::Px(320.0),
                         height: Val::Px(115.0),
-                        border: UiRect::all(Val::Px(5.0)),
-                        // horizontally center child text
+                        border: UiRect::all(Val::Px(10.0)),
                         justify_content: JustifyContent::SpaceEvenly,
-                        // vertically center child text
                         align_items: AlignItems::Center,
                         ..default()
                     },
-                    BorderColor(Color::BLACK),
-                    BorderRadius::all(Val::Percent(10.)),
-                    BackgroundColor(Pallette::DARK.srgb()),
+                    Button,
+                    BorderColor(Pallette::Black.srgb()),
+                    BorderRadius::all(Val::Percent(10.0)),
+                    BackgroundColor(Pallette::Lighter.srgb().into()),
+                    MainMenuButton::Exit,
                 ))
                 .with_child((
                     Text::new("Exit"),
@@ -139,7 +134,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>, settings: Res
                         font_size: 33.0,
                         ..default()
                     },
-                    TextColor(Pallette::LIGHT.srgb()),
+                    TextColor(Pallette::Black.srgb()),
                 ));
         });
 }
@@ -148,6 +143,7 @@ fn cleanup(mut commands: Commands, query_cleanup: Query<Entity, With<CleanupMain
     for entity in query_cleanup.iter() {
         commands.entity(entity).despawn_recursive();
     }
+    info!("[CLEANED] Main Menu.");
 }
 
 fn menu_button_interaction(
@@ -171,14 +167,19 @@ fn menu_button_interaction(
         let mut text_color = text_color_query.get_mut(children[0]).unwrap();
         match *interaction {
             Interaction::None => {
-                *text_color = Pallette::LIGHTER.srgb().into();
-                *background_color = Pallette::DARK.srgb().into();
-                border_color.0 = Pallette::DARKER.srgb().into();
+                background_color.0 = Pallette::Lighter.srgb();
+                border_color.0 = Pallette::Black.srgb();
+                text_color.0 = Pallette::Black.srgb();
+            }
+            Interaction::Hovered => {
+                background_color.0 = Pallette::Darker.srgb();
+                border_color.0 = Pallette::Black.srgb();
+                text_color.0 = Pallette::Black.srgb();
             }
             Interaction::Pressed => {
-                *text_color = Pallette::LIGHT.srgb().into();
-                *background_color = Pallette::DARKER.srgb().into();
-                border_color.0 = Pallette::BLACK.srgb().into();
+                background_color.0 = Pallette::Darker.srgb();
+                border_color.0 = Pallette::Black.srgb();
+                text_color.0 = Pallette::Black.srgb();
 
                 match mmb {
                     MainMenuButton::Play => {
@@ -197,11 +198,6 @@ fn menu_button_interaction(
                         }
                     }
                 }
-            }
-            Interaction::Hovered => {
-                *text_color = Pallette::WHITE.srgb().into();
-                *background_color = Pallette::LIGHT.srgb().into();
-                border_color.0 = Pallette::DARK.srgb().into();
             }
         }
     }

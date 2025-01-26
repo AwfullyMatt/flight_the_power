@@ -5,7 +5,7 @@ mod settings;
 use bevy::prelude::*;
 use loading::LoadingPlugin;
 use menu::MenuPlugin;
-use settings::{Settings, SettingsPlugin};
+use settings::{Pallette, Settings, SettingsPlugin};
 
 pub struct GamePlugin;
 impl Plugin for GamePlugin {
@@ -38,10 +38,13 @@ impl Plugin for GamePlugin {
         );
         app.add_plugins((LoadingPlugin, MenuPlugin, SettingsPlugin));
 
+        app.add_sub_state::<GameState>();
+
         app.add_systems(Startup, startup);
 
         app.init_state::<AppState>();
-        app.add_sub_state::<GameState>();
+
+        app.insert_resource(ClearColor(Pallette::Dark.srgb()));
     }
 }
 
