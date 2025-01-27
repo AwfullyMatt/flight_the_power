@@ -1,11 +1,15 @@
 mod loading;
 mod menu;
+mod save;
 mod settings;
+mod ui;
 
 use bevy::prelude::*;
 use loading::LoadingPlugin;
 use menu::MenuPlugin;
-use settings::{Pallette, Settings, SettingsPlugin};
+use save::SavePlugin;
+use settings::{Settings, SettingsPlugin};
+use ui::{Pallette, UIPlugin};
 
 pub struct GamePlugin;
 impl Plugin for GamePlugin {
@@ -36,7 +40,13 @@ impl Plugin for GamePlugin {
                 // PIXEL PERFECT
                 .set(ImagePlugin::default_nearest()),
         );
-        app.add_plugins((LoadingPlugin, MenuPlugin, SettingsPlugin));
+        app.add_plugins((
+            LoadingPlugin,
+            MenuPlugin,
+            SavePlugin,
+            SettingsPlugin,
+            UIPlugin,
+        ));
 
         app.add_sub_state::<GameState>();
 
@@ -57,15 +67,15 @@ fn startup(mut commands: Commands, mut query_window: Query<&mut Window>, setting
         // SET WINDOW RESOLUTION
         window
             .resolution
-            .set(settings.resolution.vec2().x, settings.resolution.vec2().y);
+            .set(settings.resolution().x, settings.resolution().y);
         // SET MONITOR SELECTION
         window
             .position
-            .center(MonitorSelection::Index(settings.monitor));
+            .center(MonitorSelection::Index(settings.monitor_index()));
         info!(
             "[INITIALIZED] Window Resolution : ({},{})",
-            settings.resolution.vec2().x,
-            settings.resolution.vec2().y
+            settings.resolution().x,
+            settings.resolution().y
         );
     }
 }

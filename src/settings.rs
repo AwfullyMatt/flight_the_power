@@ -1,8 +1,18 @@
-use bevy::{prelude::*, scene::ron::de::from_reader};
+use bevy::{
+    prelude::*,
+    scene::ron::{de::from_reader, ser::to_writer},
+};
 use serde::{Deserialize, Serialize};
-use std::fs::File;
+use std::{
+    fs::File,
+    io::{Error, ErrorKind, Result},
+};
 
-use crate::AppState;
+use crate::{
+    save::Saveable,
+    ui::{Pallette, UIButton},
+    AppState,
+};
 
 pub struct SettingsPlugin;
 impl Plugin for SettingsPlugin {
@@ -15,33 +25,54 @@ impl Plugin for SettingsPlugin {
             .add_systems(OnExit(AppState::Settings), cleanup)
             .add_systems(
                 Update,
-                settings_button_interaction.run_if(in_state(AppState::Settings)),
-            );
+                (settings_button_interaction, escape_to_menu).run_if(in_state(AppState::Settings)),
+            )
+            .add_systems(Update, update_settings);
 
-        app.insert_resource(Settings::load());
+        app.insert_resource(Settings::load("settings.ron").unwrap_or_default());
     }
 }
 
 #[derive(Default, Deserialize, Serialize, Resource)]
 pub struct Settings {
-    pub resolution: Resolution,
-    pub monitor: usize,
+    resolution: Resolution,
+    monitor: usize,
 }
 impl Settings {
-    fn load() -> Self {
-        let input_path = format!("{}/ron/settings.ron", env!("CARGO_MANIFEST_DIR"));
-        let f = File::open(input_path.clone()).expect("Failed opening file");
-        let settings: Settings = match from_reader(f) {
-            Ok(x) => {
-                info!("[INITIALIZED] Settings");
-                x
-            }
-            Err(e) => {
-                eprintln!("[ERROR] Could not deserialize {}. \n{}", input_path, e);
-                Self::default()
-            }
-        };
-        settings
+    pub fn set_resolution(&mut self, resolution: Resolution) {
+        self.resolution = resolution;
+    }
+
+    /* pub fn set_monitor(&mut self, u: usize) {
+        self.monitor = u;
+    } */
+
+    pub fn resolution(&self) -> Vec2 {
+        self.resolution.vec2()
+    }
+
+    pub fn sprite_scale(&self) -> f32 {
+        self.resolution.scale()
+    }
+
+    pub fn monitor_index(&self) -> usize {
+        self.monitor
+    }
+}
+impl Saveable for Settings {
+    fn save(&self, filename: &str) -> Result<()> {
+        let path = format!("{}/ron/{}", env!("CARGO_MANIFEST_DIR"), filename);
+        let file = File::create(path)?;
+        to_writer(file, self).map_err(|e| Error::new(ErrorKind::Other, e))
+    }
+
+    fn load(filename: &str) -> Result<Self>
+    where
+        Self: Sized,
+    {
+        let path = format!("{}/ron/{}", env!("CARGO_MANIFEST_DIR"), filename);
+        let file = File::open(path)?;
+        from_reader(file).map_err(|e| Error::new(ErrorKind::Other, e))
     }
 }
 
@@ -54,7 +85,7 @@ pub enum Resolution {
     UHD, // 2160p
 }
 impl Resolution {
-    pub fn vec2(&self) -> Vec2 {
+    fn vec2(&self) -> Vec2 {
         use Resolution::*;
 
         match self {
@@ -64,7 +95,7 @@ impl Resolution {
         }
     }
 
-    pub fn scale(&self) -> f32 {
+    fn scale(&self) -> f32 {
         use Resolution::*;
 
         match self {
@@ -75,34 +106,10 @@ impl Resolution {
     }
 }
 
-#[allow(dead_code)]
-#[derive(Resource)]
-pub enum Pallette {
-    White,
-    Lighter,
-    Light,
-    Dark,
-    Darker,
-    Black,
-}
-impl Pallette {
-    pub fn srgb(&self) -> Color {
-        use Pallette::*;
-        match self {
-            White => Color::srgb(1., 1., 1.),
-            Lighter => Color::srgb(0.8275, 0.8275, 0.8275),
-            Light => Color::srgb(0.06549, 0.06549, 0.06549),
-            Dark => Color::srgb(0.3647, 0.3647, 0.3647),
-            Darker => Color::srgb(0.2118, 0.2118, 0.2118),
-            Black => Color::srgb(0., 0., 0.),
-        }
-    }
-}
-
 #[derive(Component)]
 struct CleanupSettingsMenu;
 
-#[derive(Component)]
+#[derive(Component, Debug)]
 pub enum SettingsMenuButton {
     SD,
     HD,
@@ -110,121 +117,71 @@ pub enum SettingsMenuButton {
 }
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    // TODO: Programmatic Button Size
     let font = asset_server.load("fonts/PublicPixel.ttf");
+    let parent_node = Node {
+        width: Val::Percent(100.0),
+        height: Val::Percent(100.0),
+        align_items: AlignItems::Center,
+        justify_content: JustifyContent::SpaceEvenly,
+        flex_direction: FlexDirection::Row,
+        ..default()
+    };
+
+    let child_node = Node {
+        width: Val::Px(320.0),
+        height: Val::Px(115.0),
+        border: UiRect::all(Val::Px(10.0)),
+        justify_content: JustifyContent::Center,
+        align_items: AlignItems::Center,
+        ..default()
+    };
+
+    let style = (
+        BorderColor(Pallette::Black.srgb()),
+        BorderRadius::all(Val::Percent(10.0)),
+        BackgroundColor(Pallette::Lighter.srgb().into()),
+    );
 
     commands
-        .spawn((
-            Node {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                align_items: AlignItems::Center,
-                justify_content: JustifyContent::SpaceEvenly,
-                flex_direction: FlexDirection::Row,
-                ..default()
-            },
-            CleanupSettingsMenu,
-        ))
+        .spawn((parent_node, CleanupSettingsMenu))
         .with_children(|parent| {
-            parent
-                .spawn((Node {
-                    width: Val::Px(320.0),
-                    height: Val::Px(115.0),
-                    border: UiRect::all(Val::Px(10.0)),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
+            parent.spawn(child_node.clone()).with_child((
+                Text::new("RESOLUTION"),
+                TextFont {
+                    font: font.clone(),
+                    font_size: 50.0,
                     ..default()
-                },))
-                .with_child((
-                    Text::new("RESOLUTION"),
-                    TextFont {
-                        font: font.clone(),
-                        font_size: 50.0,
-                        ..default()
-                    },
-                    TextColor(Pallette::Black.srgb()),
-                ));
-        })
-        .with_children(|parent| {
-            parent
-                .spawn((
-                    Node {
-                        width: Val::Px(320.0),
-                        height: Val::Px(115.0),
-                        border: UiRect::all(Val::Px(10.0)),
-                        justify_content: JustifyContent::Center,
-                        align_items: AlignItems::Center,
-                        ..default()
-                    },
-                    Button,
-                    BorderColor(Pallette::Black.srgb()),
-                    BorderRadius::all(Val::Percent(10.0)),
-                    BackgroundColor(Pallette::Lighter.srgb()),
-                    SettingsMenuButton::SD,
-                ))
-                .with_child((
-                    Text::new("SD"),
-                    TextFont {
-                        font: font.clone(),
-                        font_size: 30.0,
-                        ..default()
-                    },
-                    TextColor(Pallette::Black.srgb()),
-                ));
-        })
-        .with_children(|parent| {
-            parent
-                .spawn((
-                    Node {
-                        width: Val::Px(320.0),
-                        height: Val::Px(115.0),
-                        border: UiRect::all(Val::Px(10.0)),
-                        justify_content: JustifyContent::Center,
-                        align_items: AlignItems::Center,
-                        ..default()
-                    },
-                    Button,
-                    BorderColor(Pallette::Black.srgb()),
-                    BorderRadius::all(Val::Percent(10.0)),
-                    BackgroundColor(Pallette::Lighter.srgb()),
-                    SettingsMenuButton::HD,
-                ))
-                .with_child((
-                    Text::new("HD"),
-                    TextFont {
-                        font: font.clone(),
-                        font_size: 30.0,
-                        ..default()
-                    },
-                    TextColor(Pallette::Black.srgb()),
-                ));
-        })
-        .with_children(|parent| {
-            parent
-                .spawn((
-                    Node {
-                        width: Val::Px(320.0),
-                        height: Val::Px(115.0),
-                        border: UiRect::all(Val::Px(10.0)),
-                        justify_content: JustifyContent::Center,
-                        align_items: AlignItems::Center,
-                        ..default()
-                    },
-                    Button,
-                    BorderColor(Pallette::Black.srgb()),
-                    BorderRadius::all(Val::Percent(10.0)),
-                    BackgroundColor(Pallette::Lighter.srgb()),
-                    SettingsMenuButton::UHD,
-                ))
-                .with_child((
-                    Text::new("UHD"),
-                    TextFont {
-                        font: font.clone(),
-                        font_size: 30.0,
-                        ..default()
-                    },
-                    TextColor(Pallette::Black.srgb()),
-                ));
+                },
+                TextColor(Pallette::Black.srgb()),
+            ));
+
+            for i in 0..3 {
+                let text: Text = match i {
+                    0 => Text::new("SD"),
+                    1 => Text::new("HD"),
+                    _ => Text::new("UHD"),
+                };
+                let smb: SettingsMenuButton = match i {
+                    0 => SettingsMenuButton::SD,
+                    1 => SettingsMenuButton::HD,
+                    _ => SettingsMenuButton::UHD,
+                };
+
+                parent
+                    .spawn((child_node.clone(), Button, smb, UIButton, style.clone()))
+                    .with_child((
+                        text,
+                        TextFont {
+                            font: font.clone(),
+                            font_size: 33.0,
+                            ..default()
+                        },
+                        TextColor(Pallette::Black.srgb()),
+                    ));
+            }
         });
+    info!("[SPAWNED] Settings Menu Entities.");
 }
 
 fn cleanup(mut commands: Commands, query_cleanup: Query<Entity, With<CleanupSettingsMenu>>) {
@@ -235,38 +192,69 @@ fn cleanup(mut commands: Commands, query_cleanup: Query<Entity, With<CleanupSett
 }
 
 fn settings_button_interaction(
+    mut settings: ResMut<Settings>,
     mut interaction_query: Query<
-        (
-            &Interaction,
-            &mut BackgroundColor,
-            &mut BorderColor,
-            &Children,
-            &SettingsMenuButton,
-        ),
+        (&Interaction, &SettingsMenuButton),
         (Changed<Interaction>, With<SettingsMenuButton>),
     >,
-    mut text_color_query: Query<&mut TextColor>,
 ) {
-    for (interaction, mut background_color, mut border_color, children, _smb) in
-        &mut interaction_query
-    {
-        let mut text_color = text_color_query.get_mut(children[0]).unwrap();
-        match *interaction {
-            Interaction::None => {
-                background_color.0 = Pallette::Lighter.srgb();
-                border_color.0 = Pallette::Black.srgb();
-                text_color.0 = Pallette::Black.srgb();
-            }
-            Interaction::Hovered => {
-                background_color.0 = Pallette::Darker.srgb();
-                border_color.0 = Pallette::Black.srgb();
-                text_color.0 = Pallette::Black.srgb();
-            }
-            Interaction::Pressed => {
-                background_color.0 = Pallette::Darker.srgb();
-                border_color.0 = Pallette::Black.srgb();
-                text_color.0 = Pallette::Black.srgb();
-            }
+    use SettingsMenuButton::*;
+
+    for (interaction, smb) in &mut interaction_query {
+        match interaction {
+            Interaction::Pressed => match smb {
+                SD => {
+                    settings.set_resolution(Resolution::SD);
+                    info!("[MODIFIED] Resolution - {smb:?}");
+                }
+                HD => {
+                    settings.set_resolution(Resolution::HD);
+                    info!("[MODIFIED] Resolution - {smb:?}");
+                }
+                UHD => {
+                    settings.set_resolution(Resolution::UHD);
+                    info!("[MODIFIED] Resolution - {smb:?}");
+                }
+            },
+            _ => {}
         }
     }
 }
+
+fn update_settings(settings: Res<Settings>, mut query_window: Query<&mut Window>) {
+    if settings.is_changed() {
+        if let Ok(mut window) = query_window.get_single_mut() {
+            // SET WINDOW RESOLUTION
+            window
+                .resolution
+                .set(settings.resolution().x, settings.resolution().y);
+            // SET MONITOR SELECTION
+            window
+                .position
+                .center(MonitorSelection::Index(settings.monitor_index()));
+            info!(
+                "[INITIALIZED] Window Resolution : ({},{})",
+                settings.resolution().x,
+                settings.resolution().y
+            );
+        }
+    }
+}
+
+fn escape_to_menu(
+    keys: Res<ButtonInput<KeyCode>>,
+    current_state: Res<State<AppState>>,
+    mut next_state: ResMut<NextState<AppState>>,
+) {
+    if keys.just_pressed(KeyCode::Escape) {
+        match current_state.get() {
+            AppState::Settings => {
+                next_state.set(AppState::Menu);
+                info!("[MODIFIED] Appstate >> Settings");
+            }
+            _ => {}
+        }
+    }
+}
+
+// TODO: Physical Back Button, Monitor Selection Functionality

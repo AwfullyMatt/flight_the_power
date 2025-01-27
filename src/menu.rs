@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 
 use crate::{
-    settings::{Pallette, Settings},
+    settings::Settings,
+    ui::{Pallette, UIButton},
     AppState,
 };
 
@@ -37,106 +38,66 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>, settings: Res
     // SPAWN BACKGROUND
     commands.spawn((
         Sprite::from_image(asset_server.load("sprites/backgrounds/title.png")),
-        Transform::from_scale(Vec3::splat(settings.resolution.scale())),
+        Transform::from_scale(Vec3::splat(settings.sprite_scale())),
         CleanupMainMenu,
     ));
 
     // SPAWN BUTTONS
     // TODO: Programmatic Button Size
+    let font = asset_server.load("fonts/PublicPixel.ttf");
+    let parent_node = Node {
+        width: Val::Percent(100.0),
+        height: Val::Percent(33.0),
+        top: Val::Percent(70.0),
+        align_items: AlignItems::Center,
+        justify_content: JustifyContent::SpaceEvenly,
+        ..default()
+    };
+
+    let child_node = Node {
+        width: Val::Px(320.0),
+        height: Val::Px(115.0),
+        border: UiRect::all(Val::Px(10.0)),
+        justify_content: JustifyContent::Center,
+        align_items: AlignItems::Center,
+        ..default()
+    };
+
+    let style = (
+        BorderColor(Pallette::Black.srgb()),
+        BorderRadius::all(Val::Percent(10.0)),
+        BackgroundColor(Pallette::Lighter.srgb().into()),
+    );
+
     commands
-        .spawn((
-            Node {
-                width: Val::Percent(100.0),
-                height: Val::Percent(25.0),
-                top: Val::Percent(70.0),
-                bottom: Val::Percent(100.0),
-                align_items: AlignItems::Center,
-                justify_content: JustifyContent::SpaceEvenly,
-                ..default()
-            },
-            CleanupMainMenu,
-        ))
+        .spawn((parent_node, CleanupMainMenu))
         .with_children(|parent| {
-            parent
-                .spawn((
-                    Node {
-                        width: Val::Px(320.0),
-                        height: Val::Px(115.0),
-                        border: UiRect::all(Val::Px(10.0)),
-                        justify_content: JustifyContent::SpaceEvenly,
-                        align_items: AlignItems::Center,
-                        ..default()
-                    },
-                    Button,
-                    BorderColor(Pallette::Black.srgb()),
-                    BorderRadius::all(Val::Percent(10.0)),
-                    BackgroundColor(Pallette::Lighter.srgb().into()),
-                    MainMenuButton::Play,
-                ))
-                .with_child((
-                    Text::new("Play"),
-                    TextFont {
-                        font: asset_server.load("fonts/PublicPixel.ttf"),
-                        font_size: 33.0,
-                        ..default()
-                    },
-                    TextColor(Pallette::Black.srgb()),
-                ));
-        })
-        .with_children(|parent| {
-            parent
-                .spawn((
-                    Node {
-                        width: Val::Px(320.0),
-                        height: Val::Px(115.0),
-                        border: UiRect::all(Val::Px(10.0)),
-                        justify_content: JustifyContent::SpaceEvenly,
-                        align_items: AlignItems::Center,
-                        ..default()
-                    },
-                    Button,
-                    BorderColor(Pallette::Black.srgb()),
-                    BorderRadius::all(Val::Percent(10.0)),
-                    BackgroundColor(Pallette::Lighter.srgb().into()),
-                    MainMenuButton::Settings,
-                ))
-                .with_child((
-                    Text::new("Settings"),
-                    TextFont {
-                        font: asset_server.load("fonts/PublicPixel.ttf"),
-                        font_size: 33.0,
-                        ..default()
-                    },
-                    TextColor(Pallette::Black.srgb()),
-                ));
-        })
-        .with_children(|parent| {
-            parent
-                .spawn((
-                    Node {
-                        width: Val::Px(320.0),
-                        height: Val::Px(115.0),
-                        border: UiRect::all(Val::Px(10.0)),
-                        justify_content: JustifyContent::SpaceEvenly,
-                        align_items: AlignItems::Center,
-                        ..default()
-                    },
-                    Button,
-                    BorderColor(Pallette::Black.srgb()),
-                    BorderRadius::all(Val::Percent(10.0)),
-                    BackgroundColor(Pallette::Lighter.srgb().into()),
-                    MainMenuButton::Exit,
-                ))
-                .with_child((
-                    Text::new("Exit"),
-                    TextFont {
-                        font: asset_server.load("fonts/PublicPixel.ttf"),
-                        font_size: 33.0,
-                        ..default()
-                    },
-                    TextColor(Pallette::Black.srgb()),
-                ));
+            for i in 0..3 {
+                let text: Text = match i {
+                    0 => Text::new("Play"),
+                    1 => Text::new("Settings"),
+                    _ => Text::new("Exit"),
+                };
+                let mmb: MainMenuButton = match i {
+                    0 => MainMenuButton::Play,
+                    1 => MainMenuButton::Settings,
+                    _ => MainMenuButton::Exit,
+                };
+
+                parent
+                    .spawn((child_node.clone(), Button, mmb, UIButton, style.clone()))
+                    .with_child((
+                        text,
+                        TextFont {
+                            font: font.clone(),
+                            font_size: 33.0,
+                            ..default()
+                        },
+                        TextColor(Pallette::Black.srgb()),
+                    ));
+            }
         });
+    info!("[SPAWNED] Settings Menu Entities.");
 }
 
 fn cleanup(mut commands: Commands, query_cleanup: Query<Entity, With<CleanupMainMenu>>) {
@@ -148,57 +109,28 @@ fn cleanup(mut commands: Commands, query_cleanup: Query<Entity, With<CleanupMain
 
 fn menu_button_interaction(
     mut interaction_query: Query<
-        (
-            &Interaction,
-            &mut BackgroundColor,
-            &mut BorderColor,
-            &Children,
-            &MainMenuButton,
-        ),
+        (&Interaction, &MainMenuButton),
         (Changed<Interaction>, With<MainMenuButton>),
     >,
-    mut text_color_query: Query<&mut TextColor>,
-    current_state: Res<State<AppState>>,
     mut next_state: ResMut<NextState<AppState>>,
 ) {
-    for (interaction, mut background_color, mut border_color, children, mmb) in
-        &mut interaction_query
-    {
-        let mut text_color = text_color_query.get_mut(children[0]).unwrap();
-        match *interaction {
-            Interaction::None => {
-                background_color.0 = Pallette::Lighter.srgb();
-                border_color.0 = Pallette::Black.srgb();
-                text_color.0 = Pallette::Black.srgb();
-            }
-            Interaction::Hovered => {
-                background_color.0 = Pallette::Darker.srgb();
-                border_color.0 = Pallette::Black.srgb();
-                text_color.0 = Pallette::Black.srgb();
-            }
-            Interaction::Pressed => {
-                background_color.0 = Pallette::Darker.srgb();
-                border_color.0 = Pallette::Black.srgb();
-                text_color.0 = Pallette::Black.srgb();
-
-                match mmb {
-                    MainMenuButton::Play => {
-                        if current_state.get() == &AppState::Menu {
-                            next_state.set(AppState::Playing);
-                        }
-                    }
-                    MainMenuButton::Settings => {
-                        if current_state.get() == &AppState::Menu {
-                            next_state.set(AppState::Settings);
-                        }
-                    }
-                    MainMenuButton::Exit => {
-                        if current_state.get() == &AppState::Menu {
-                            next_state.set(AppState::Exit);
-                        }
-                    }
+    for (interaction, mmb) in &mut interaction_query {
+        match interaction {
+            Interaction::Pressed => match mmb {
+                MainMenuButton::Play => {
+                    next_state.set(AppState::Playing);
+                    info!("[MODIFIED] AppState >> Playing");
                 }
-            }
+                MainMenuButton::Settings => {
+                    next_state.set(AppState::Settings);
+                    info!("[MODIFIED] AppState >> Settings");
+                }
+                MainMenuButton::Exit => {
+                    next_state.set(AppState::Exit);
+                    info!("[MODIFIED] AppState >> Exit");
+                }
+            },
+            _ => {}
         }
     }
 }
