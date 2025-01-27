@@ -1,7 +1,7 @@
 # Flight The Power  
 **why watch world when video game?..**  
   
-![menu](https://github.com/user-attachments/assets/4c4abd16-579c-4cce-9ffa-7fb1a083ab73)  
+![menu](https://github.com/user-attachments/assets/9cce056a-4f00-47e7-988d-8145eb3fa1f0)  
   
 ![settings](https://github.com/user-attachments/assets/ea735858-bb1f-4b9a-9d83-4dd8229e33fe)  
   
