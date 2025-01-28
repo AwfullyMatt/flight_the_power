@@ -42,14 +42,14 @@ fn cleanup(mut commands: Commands, query_cleanup: Query<Entity, With<CleanupTitl
 #[derive(AssetCollection, Resource)]
 pub struct BackgroundAssets {
     #[asset(path = "sprites/backgrounds/title.png")]
-    title_background: Handle<Image>,
+    pub title_background: Handle<Image>,
 
     #[asset(path = "sprites/backgrounds/room.png")]
-    room_background: Handle<Image>,
+    pub room_background: Handle<Image>,
 }
 
 #[derive(AssetCollection, Resource)]
 pub struct MusicAssets {
     #[asset(path = "audio/windless_slopes.ogg")] //TODO: This is placeholder non-DMCA audio
-    title_music: Handle<AudioSource>,
+    pub title_music: Handle<AudioSource>,
 }

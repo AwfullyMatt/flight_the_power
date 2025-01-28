@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::{
+    loading::BackgroundAssets,
     settings::Settings,
     ui::{Pallette, UIButton},
     AppState,
@@ -32,12 +33,17 @@ pub enum MainMenuButton {
     Exit,
 }
 
-fn startup(mut commands: Commands, asset_server: Res<AssetServer>, settings: Res<Settings>) {
+fn startup(
+    asset_server: Res<AssetServer>,
+    mut commands: Commands,
+    settings: Res<Settings>,
+    background_assets: Res<BackgroundAssets>,
+) {
     //TODO: Title Card Before Menu
 
     // SPAWN BACKGROUND
     commands.spawn((
-        Sprite::from_image(asset_server.load("sprites/backgrounds/title.png")),
+        Sprite::from_image(background_assets.title_background.clone()),
         Transform::from_scale(Vec3::splat(settings.sprite_scale())),
         CleanupMainMenu,
     ));

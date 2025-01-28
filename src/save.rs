@@ -1,7 +1,14 @@
-use bevy::prelude::*;
-use std::io::Result;
+use bevy::{
+    prelude::*,
+    scene::ron::{de::from_reader, ser::to_writer},
+};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use std::{
+    fs::File,
+    io::{Error, ErrorKind, Result},
+};
 
-use crate::{settings::Settings, AppState};
+use crate::{game::PowerUnlockFlags, settings::Settings, AppState};
 
 pub struct SavePlugin;
 impl Plugin for SavePlugin {
@@ -23,13 +30,40 @@ pub trait Saveable {
         Self: Sized;
 }
 
+pub fn format_save<'a, T>(t: &'a T, filename: &str) -> Result<()>
+where
+    T: Saveable + Serialize + Deserialize<'a>,
+{
+    let path = format!("{}/ron/{}", env!("CARGO_MANIFEST_DIR"), filename);
+    let file = File::create(&path)?;
+    let t = to_writer(file, t).map_err(|e| Error::new(ErrorKind::Other, e));
+    info!("[SAVED] {path}");
+    t
+}
+
+pub fn format_load<T>(filename: &str) -> Result<T>
+where
+    T: Saveable + Serialize + DeserializeOwned,
+{
+    let path = format!("{}/ron/{}", env!("CARGO_MANIFEST_DIR"), filename);
+    let file = File::open(&path)?;
+    let t = from_reader(file).map_err(|e| Error::new(ErrorKind::Other, e));
+    info!("[LOADED] {path}");
+    t
+}
+
 #[derive(Event)]
 pub struct Save;
 
-fn evr_save(mut evr_save: EventReader<Save>, settings: Res<Settings>) {
+fn evr_save(
+    mut evr_save: EventReader<Save>,
+    settings: Res<Settings>,
+    power_flags: Res<PowerUnlockFlags>,
+) {
     for _ev in evr_save.read() {
         info!("[EVENT] [READ] Save Game");
         let _ = settings.save("settings.ron");
+        let _ = power_flags.save("power_unlocks.ron");
     }
 }
 

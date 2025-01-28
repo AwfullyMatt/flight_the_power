@@ -1,15 +1,9 @@
-use bevy::{
-    prelude::*,
-    scene::ron::{de::from_reader, ser::to_writer},
-};
+use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::{
-    fs::File,
-    io::{Error, ErrorKind, Result},
-};
+use std::io::Result;
 
 use crate::{
-    save::Saveable,
+    save::{format_load, format_save, Saveable},
     ui::{Pallette, UIButton},
     AppState,
 };
@@ -29,7 +23,9 @@ impl Plugin for SettingsPlugin {
             )
             .add_systems(Update, update_settings);
 
-        app.insert_resource(Settings::load("settings.ron").unwrap_or_default());
+        app.insert_resource(
+            Settings::load("settings.ron").expect("[ERROR] Could not load settings.ron"),
+        );
     }
 }
 
@@ -61,18 +57,14 @@ impl Settings {
 }
 impl Saveable for Settings {
     fn save(&self, filename: &str) -> Result<()> {
-        let path = format!("{}/ron/{}", env!("CARGO_MANIFEST_DIR"), filename);
-        let file = File::create(path)?;
-        to_writer(file, self).map_err(|e| Error::new(ErrorKind::Other, e))
+        format_save(self, filename)
     }
 
     fn load(filename: &str) -> Result<Self>
     where
         Self: Sized,
     {
-        let path = format!("{}/ron/{}", env!("CARGO_MANIFEST_DIR"), filename);
-        let file = File::open(path)?;
-        from_reader(file).map_err(|e| Error::new(ErrorKind::Other, e))
+        format_load(filename)
     }
 }
 
@@ -187,7 +179,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn cleanup(mut commands: Commands, query_cleanup: Query<Entity, With<CleanupSettingsMenu>>) {
     for entity in query_cleanup.iter() {
         commands.entity(entity).despawn_recursive();
-        info!("[CLEANED] Settings Menu.");
+        info!("[DESPAWNED] Settings Menu Entities");
     }
 }
 

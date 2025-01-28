@@ -1,3 +1,4 @@
+mod game;
 mod loading;
 mod menu;
 mod save;
@@ -5,9 +6,11 @@ mod settings;
 mod ui;
 
 use bevy::prelude::*;
+use game::GameLoopPlugin;
 use loading::LoadingPlugin;
 use menu::MenuPlugin;
 use save::SavePlugin;
+use serde::{Deserialize, Serialize};
 use settings::{Settings, SettingsPlugin};
 use ui::{Pallette, UIPlugin};
 
@@ -41,6 +44,7 @@ impl Plugin for GamePlugin {
                 .set(ImagePlugin::default_nearest()),
         );
         app.add_plugins((
+            GameLoopPlugin,
             LoadingPlugin,
             MenuPlugin,
             SavePlugin,
@@ -95,4 +99,12 @@ pub enum AppState {
 pub enum GameState {
     #[default]
     Home,
+}
+
+#[derive(Component, Deref, DerefMut, Deserialize, Serialize)]
+pub struct Title(String);
+impl Title {
+    pub fn string(&self) -> &String {
+        &self.0
+    }
 }
