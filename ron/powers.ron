@@ -1,0 +1,61 @@
+(
+  [
+    (
+      title: ("Default Power"),
+      id: 0,
+      cost: 0,
+      production_amount: 1,
+      production_rate: 1000000.0,
+      max_owned: 1,
+    ),
+    (
+      title: ("Hamster on a Wheel"),
+      id: 1,
+      cost: 100,
+      production_amount: 10,
+      production_rate: 5.0,
+      max_owned: 30000000, // approx population of hamsters according to some robot
+    ),
+    (
+      title: ("Middle School Science Project"),
+      id: 2,
+      cost: 1000,
+      production_amount: 66,
+      production_rate: 15.0,
+      max_owned: 9223372036854775807, // i64::MAX, they are potatoes
+    ),
+    (
+      title: ("Portable Generator"),
+      id: 3,
+      cost: 10000,
+      production_amount: 100,
+      production_rate: 20.0,
+      max_owned: 9223372036854775807, // i64::MAX, the machine cannot be stopped
+    ),
+    (
+      title: ("Hotwire the Neighbors"),
+      id: 4,
+      cost: 100000,
+      production_amount: 1000,
+      production_rate: 60.0,
+      max_owned: 128000000, // "neighbors" is subjective
+    ),
+    (
+      title: ("Garage Reactor"),
+      id: 5,
+      cost: 222222,
+      production_amount: 1000,
+      production_rate: 1.0,
+      max_owned: 1, // don't have a garage
+    ),
+    (
+      title: ("Buttered Cat Paradox"),
+      id: 9,
+      cost: 1,
+      production_amount: 1000,
+      production_rate: 0.01,
+      max_owned: 1, // you found the cat
+      ),
+
+  ]
+)

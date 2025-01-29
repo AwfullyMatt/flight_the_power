@@ -22,6 +22,9 @@ impl Plugin for GameLoopPlugin {
             .insert_resource(
                 PowerUnlockFlags::load("power_unlocks.ron")
                     .expect("[ERROR] Could not load power_unlocks.ron"),
+            )
+            .insert_resource(
+                Powers::load("powers.ron").expect("[ERROR] Could not load powers.ron"),
             );
     }
 }
@@ -34,8 +37,9 @@ struct Power {
     title: Title,
     id: usize,
     cost: i64,
-    production: i64,
-    rate: f64,
+    production_amount: i64,
+    production_rate: f64,
+    max_owned: i64,
 }
 
 #[derive(Deref, DerefMut, Deserialize, Resource, Serialize)]
