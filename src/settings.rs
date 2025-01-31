@@ -72,18 +72,18 @@ impl Saveable for Settings {
 #[derive(Default, Deserialize, Serialize)]
 pub enum Resolution {
     #[default]
-    SD, // 480p
-    HD,  // 1080p
-    UHD, // 2160p
+    Sd, // 480p
+    Hd,  // 1080p
+    Uhd, // 2160p
 }
 impl Resolution {
     fn vec2(&self) -> Vec2 {
         use Resolution::*;
 
         match self {
-            SD => Vec2 { x: 640., y: 480. },
-            HD => Vec2 { x: 1920., y: 1080. },
-            UHD => Vec2 { x: 3840., y: 2160. },
+            Sd => Vec2 { x: 640., y: 480. },
+            Hd => Vec2 { x: 1920., y: 1080. },
+            Uhd => Vec2 { x: 3840., y: 2160. },
         }
     }
 
@@ -91,9 +91,9 @@ impl Resolution {
         use Resolution::*;
 
         match self {
-            SD => 2.0,
-            HD => 5.0,
-            UHD => 10.0,
+            Sd => 2.0,
+            Hd => 5.0,
+            Uhd => 10.0,
         }
     }
 }
@@ -103,9 +103,9 @@ struct CleanupSettingsMenu;
 
 #[derive(Component, Debug)]
 pub enum SettingsMenuButton {
-    SD,
-    HD,
-    UHD,
+    Sd,
+    Hd,
+    Uhd,
 }
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -132,7 +132,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     let style = (
         BorderColor(Pallette::Black.srgb()),
         BorderRadius::all(Val::Percent(10.0)),
-        BackgroundColor(Pallette::Lighter.srgb().into()),
+        BackgroundColor(Pallette::Lighter.srgb()),
     );
 
     commands
@@ -155,13 +155,13 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     _ => Text::new("UHD"),
                 };
                 let smb: SettingsMenuButton = match i {
-                    0 => SettingsMenuButton::SD,
-                    1 => SettingsMenuButton::HD,
-                    _ => SettingsMenuButton::UHD,
+                    0 => SettingsMenuButton::Sd,
+                    1 => SettingsMenuButton::Hd,
+                    _ => SettingsMenuButton::Uhd,
                 };
 
                 parent
-                    .spawn((child_node.clone(), Button, smb, UIButton, style.clone()))
+                    .spawn((child_node.clone(), Button, smb, UIButton, style))
                     .with_child((
                         text,
                         TextFont {
@@ -193,22 +193,21 @@ fn settings_button_interaction(
     use SettingsMenuButton::*;
 
     for (interaction, smb) in &mut interaction_query {
-        match interaction {
-            Interaction::Pressed => match smb {
-                SD => {
-                    settings.set_resolution(Resolution::SD);
+        if *interaction == Interaction::Pressed {
+            match smb {
+                Sd => {
+                    settings.set_resolution(Resolution::Sd);
                     info!("[MODIFIED] Resolution - {smb:?}");
                 }
-                HD => {
-                    settings.set_resolution(Resolution::HD);
+                Hd => {
+                    settings.set_resolution(Resolution::Hd);
                     info!("[MODIFIED] Resolution - {smb:?}");
                 }
-                UHD => {
-                    settings.set_resolution(Resolution::UHD);
+                Uhd => {
+                    settings.set_resolution(Resolution::Uhd);
                     info!("[MODIFIED] Resolution - {smb:?}");
                 }
-            },
-            _ => {}
+            }
         }
     }
 }
@@ -238,14 +237,9 @@ fn escape_to_menu(
     current_state: Res<State<AppState>>,
     mut next_state: ResMut<NextState<AppState>>,
 ) {
-    if keys.just_pressed(KeyCode::Escape) {
-        match current_state.get() {
-            AppState::Settings => {
-                next_state.set(AppState::Menu);
-                info!("[MODIFIED] Appstate >> Settings");
-            }
-            _ => {}
-        }
+    if keys.just_pressed(KeyCode::Escape) && *current_state.get() == AppState::Settings {
+        next_state.set(AppState::Menu);
+        info!("[MODIFIED] Appstate >> Settings");
     }
 }
 

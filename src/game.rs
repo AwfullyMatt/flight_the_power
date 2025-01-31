@@ -7,7 +7,7 @@ use crate::{
     loading::{BackgroundAssets, PowerAssets},
     save::{format_load, format_save, Saveable},
     settings::Settings,
-    ui::{Pallette, UIButton, UIButtonParentNode, UIButtonPowerNode},
+    ui::{UIButton, UIButtonParentNode, UIButtonPowerNode},
     AppState, Title, ID,
 };
 

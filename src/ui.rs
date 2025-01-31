@@ -35,6 +35,7 @@ impl UIButtonParentNode {
 
 #[derive(Component)]
 pub struct UIButtonChildNode;
+#[allow(dead_code)] //TODO:
 impl UIButtonChildNode {
     pub fn node() -> Node {
         Node {
@@ -54,6 +55,7 @@ impl UIButtonChildNode {
 
 #[derive(Component)]
 pub struct UIButtonPowerNode;
+#[allow(dead_code)] //TODO:
 impl UIButtonPowerNode {
     pub fn node() -> Node {
         Node {
@@ -71,7 +73,7 @@ impl UIButtonPowerNode {
     }
 }
 
-#[allow(dead_code)]
+#[allow(dead_code)] //TODO:
 #[derive(Resource)]
 pub enum Pallette {
     White,

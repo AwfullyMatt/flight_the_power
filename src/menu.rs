@@ -64,7 +64,7 @@ fn startup(
     let style = (
         BorderColor(Pallette::Black.srgb()),
         BorderRadius::all(Val::Percent(10.0)),
-        BackgroundColor(Pallette::Lighter.srgb().into()),
+        BackgroundColor(Pallette::Lighter.srgb()),
     );
 
     commands
@@ -83,7 +83,7 @@ fn startup(
                 };
 
                 parent
-                    .spawn((child_node.clone(), Button, mmb, UIButton, style.clone()))
+                    .spawn((child_node.clone(), Button, mmb, UIButton, style))
                     .with_child((
                         text,
                         TextFont {
@@ -113,8 +113,8 @@ fn menu_button_interaction(
     mut next_state: ResMut<NextState<AppState>>,
 ) {
     for (interaction, mmb) in &mut interaction_query {
-        match interaction {
-            Interaction::Pressed => match mmb {
+        if *interaction == Interaction::Pressed {
+            match mmb {
                 MainMenuButton::Play => {
                     next_state.set(AppState::Playing);
                     info!("[MODIFIED] AppState >> Playing");
@@ -127,8 +127,7 @@ fn menu_button_interaction(
                     next_state.set(AppState::Exit);
                     info!("[MODIFIED] AppState >> Exit");
                 }
-            },
-            _ => {}
+            }
         }
     }
 }
