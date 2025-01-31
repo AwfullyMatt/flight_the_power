@@ -14,6 +14,63 @@ impl Plugin for UIPlugin {
 #[derive(Component)]
 pub struct UIButton;
 
+#[derive(Component)]
+pub struct UIButtonParentNode;
+impl UIButtonParentNode {
+    pub fn node() -> Node {
+        Node {
+            width: Val::Percent(100.0),
+            height: Val::Percent(33.0),
+            top: Val::Percent(70.0),
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::SpaceEvenly,
+            ..default()
+        }
+    }
+
+    pub fn marker() -> Self {
+        Self
+    }
+}
+
+#[derive(Component)]
+pub struct UIButtonChildNode;
+impl UIButtonChildNode {
+    pub fn node() -> Node {
+        Node {
+            width: Val::Px(320.0),
+            height: Val::Px(115.0),
+            border: UiRect::all(Val::Px(10.0)),
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+            ..default()
+        }
+    }
+
+    pub fn marker() -> Self {
+        Self
+    }
+}
+
+#[derive(Component)]
+pub struct UIButtonPowerNode;
+impl UIButtonPowerNode {
+    pub fn node() -> Node {
+        Node {
+            width: Val::Px(160.0),
+            height: Val::Px(200.0),
+            border: UiRect::all(Val::Px(10.0)),
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+            ..default()
+        }
+    }
+
+    pub fn marker() -> Self {
+        Self
+    }
+}
+
 #[allow(dead_code)]
 #[derive(Resource)]
 pub enum Pallette {

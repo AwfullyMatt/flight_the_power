@@ -2,7 +2,7 @@
   [
     (
       title: ("Default Power"),
-      id: 0,
+      id: (0),
       cost: 0,
       production_amount: 1,
       production_rate: 1000000.0, // ratio: 0.000001
@@ -10,7 +10,7 @@
     ),
     (
       title: ("Middle School Science Project"),
-      id: 1,
+      id: (1),
       cost: 100,
       production_amount: 10,
       production_rate: 10.0, // ratio: 1.0
@@ -18,7 +18,7 @@
     ),
     (
       title: ("Hamster on a Wheel"),
-      id: 2,
+      id: (2),
       cost: 1000,
       production_amount: 25,
       production_rate: 5.0, // ratio: 5.0
@@ -27,7 +27,7 @@
     ),
     (
       title: ("'Gas' Engine"),
-      id: 3,
+      id: (3),
       cost: 33333,
       production_amount: 100000,
       production_rate: 240.0, // ratio: 416.6
@@ -35,7 +35,7 @@
     ),
     (
       title: ("Portable Generator"),
-      id: 4,
+      id: (4),
       cost: 242424,
       production_amount: 800,
       production_rate: 8.0, // ratio: 100.0
@@ -43,7 +43,7 @@
     ),
     (
       title: ("Hotwire the Neighbors"),
-      id: 5,
+      id: (5),
       cost: 999999,
       production_amount: 222,
       production_rate: 1.0, // ratio: 222.0
@@ -51,7 +51,7 @@
     ),
     (
       title: ("Electric Eel Farm"),
-      id: 6,
+      id: (6),
       cost: 2500000,
       production_amount: 25000,
       production_rate: 60.0, // ratio: 416.0
@@ -59,7 +59,7 @@
     ),
     (
       title: ("Miniscule Hadron Collider"),
-      id: 7,
+      id: (7),
       cost: 111111111,
       production_amount: 123456,
       production_rate: 33.0, // ratio: 3741.0
@@ -67,7 +67,7 @@
     ),
     (
       title: ("Luke-warm Fusion Reactor"),
-      id: 8,
+      id: (8),
       cost: 987654321,
       production_amount: 9999,
       production_rate: 0.1, // ratio: 99990.0
@@ -75,7 +75,7 @@
     ),
     (
       title: ("Buttered Cat Paradox"),
-      id: 9,
+      id: (9),
       cost: 1,
       production_amount: 1,
       production_rate: 0.00001, // ratio: 100000 

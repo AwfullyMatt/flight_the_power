@@ -104,7 +104,15 @@ pub enum GameState {
 #[derive(Component, Deref, DerefMut, Deserialize, Serialize)]
 pub struct Title(String);
 impl Title {
-    pub fn string(&self) -> &String {
+    pub fn title(&self) -> &String {
+        &self.0
+    }
+}
+
+#[derive(Component, Deref, DerefMut, Deserialize, Serialize)]
+pub struct ID(usize);
+impl ID {
+    pub fn id(&self) -> &usize {
         &self.0
     }
 }
