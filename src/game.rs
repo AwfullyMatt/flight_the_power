@@ -7,7 +7,7 @@ use crate::{
     loading::{BackgroundAssets, PowerAssets},
     save::{format_load, format_save, Saveable},
     settings::Settings,
-    ui::{Pallette, UIButtonParentNode, UIButtonPowerNode},
+    ui::{Pallette, UIButton, UIButtonParentNode, UIButtonPowerNode},
     AppState, Title, ID,
 };
 
@@ -166,7 +166,12 @@ fn evr_spawn_power_button(
                             .spawn((UIButtonPowerNode::node(), Button, children_style))
                             .id();
                         let grandchildren = commands
-                            .spawn((UIButtonPowerNode::node(), Button, grandchildren_style))
+                            .spawn((
+                                UIButtonPowerNode::node(),
+                                Button,
+                                UIButton,
+                                grandchildren_style,
+                            ))
                             .id();
                         commands.entity(children).add_children(&[grandchildren]);
                         commands.entity(entity).add_children(&[children]);

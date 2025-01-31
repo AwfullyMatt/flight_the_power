@@ -7,7 +7,7 @@ impl Plugin for UIPlugin {
     }
 
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, button_color_system);
+        app.add_systems(Update, (button_color_system, button_atlas_system));
     }
 }
 
@@ -96,21 +96,18 @@ impl Pallette {
 }
 
 fn button_color_system(
-    mut interaction_query: Query<
+    mut query_interaction: Query<
         (
             &Interaction,
             &mut BackgroundColor,
             &mut BorderColor,
             &Children,
-            &UIButton,
         ),
         (Changed<Interaction>, With<UIButton>),
     >,
     mut text_color_query: Query<&mut TextColor>,
 ) {
-    for (interaction, mut background_color, mut border_color, children, _smb) in
-        &mut interaction_query
-    {
+    for (interaction, mut background_color, mut border_color, children) in &mut query_interaction {
         let mut text_color = text_color_query.get_mut(children[0]).unwrap();
         match *interaction {
             Interaction::None => {
@@ -127,6 +124,33 @@ fn button_color_system(
                 background_color.0 = Pallette::Darker.srgb();
                 border_color.0 = Pallette::White.srgb();
                 text_color.0 = Pallette::Black.srgb();
+            }
+        }
+    }
+}
+
+fn button_atlas_system(
+    mut query_interaction: Query<
+        (&Interaction, &mut ImageNode),
+        (Changed<Interaction>, With<UIButton>),
+    >,
+) {
+    for (interaction, mut image_node) in query_interaction.iter_mut() {
+        match *interaction {
+            Interaction::None => {
+                if let Some(atlas) = &mut image_node.texture_atlas {
+                    atlas.index = 0;
+                }
+            }
+            Interaction::Hovered => {
+                if let Some(atlas) = &mut image_node.texture_atlas {
+                    atlas.index = 1;
+                }
+            }
+            Interaction::Pressed => {
+                if let Some(atlas) = &mut image_node.texture_atlas {
+                    atlas.index = 2;
+                }
             }
         }
     }
