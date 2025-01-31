@@ -97,7 +97,7 @@ fn startup(
 
     // SPAWN POWER BUTTON NODE
     commands.spawn((
-        UIButtonParentNode::node(),
+        UIButtonParentNode::default(),
         UIButtonParentNode::marker(),
         CleanupGame,
     ));
@@ -163,11 +163,11 @@ fn evr_spawn_power_button(
                             ),
                         );
                         let children = commands
-                            .spawn((UIButtonPowerNode::node(), Button, children_style))
+                            .spawn((UIButtonPowerNode::default(), Button, children_style))
                             .id();
                         let grandchildren = commands
                             .spawn((
-                                UIButtonPowerNode::node(),
+                                UIButtonPowerNode::default(),
                                 Button,
                                 UIButton,
                                 grandchildren_style,

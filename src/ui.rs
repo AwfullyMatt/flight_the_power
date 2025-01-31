@@ -17,11 +17,22 @@ pub struct UIButton;
 #[derive(Component)]
 pub struct UIButtonParentNode;
 impl UIButtonParentNode {
-    pub fn node() -> Node {
+    pub fn default() -> Node {
         Node {
             width: Val::Percent(100.0),
             height: Val::Percent(33.0),
             top: Val::Percent(70.0),
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::SpaceEvenly,
+            ..default()
+        }
+    }
+
+    pub fn new(w: f32, h: f32, t: f32) -> Node {
+        Node {
+            width: Val::Percent(w),
+            height: Val::Percent(h),
+            top: Val::Percent(t),
             align_items: AlignItems::Center,
             justify_content: JustifyContent::SpaceEvenly,
             ..default()
@@ -37,13 +48,24 @@ impl UIButtonParentNode {
 pub struct UIButtonChildNode;
 #[allow(dead_code)] //TODO:
 impl UIButtonChildNode {
-    pub fn node() -> Node {
+    pub fn default() -> Node {
         Node {
             width: Val::Px(320.0),
             height: Val::Px(115.0),
             border: UiRect::all(Val::Px(10.0)),
-            justify_content: JustifyContent::Center,
             align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
+            ..default()
+        }
+    }
+
+    pub fn new(w: f32, h: f32, t: f32) -> Node {
+        Node {
+            width: Val::Percent(w),
+            height: Val::Percent(h),
+            top: Val::Percent(t),
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
             ..default()
         }
     }
@@ -57,13 +79,24 @@ impl UIButtonChildNode {
 pub struct UIButtonPowerNode;
 #[allow(dead_code)] //TODO:
 impl UIButtonPowerNode {
-    pub fn node() -> Node {
+    pub fn default() -> Node {
         Node {
             width: Val::Px(160.0),
             height: Val::Px(200.0),
             border: UiRect::all(Val::Px(10.0)),
             justify_content: JustifyContent::Center,
             align_items: AlignItems::Center,
+            ..default()
+        }
+    }
+
+    pub fn new(w: f32, h: f32, b: f32) -> Node {
+        Node {
+            width: Val::Percent(w),
+            height: Val::Percent(h),
+            border: UiRect::all(Val::Px(b)),
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
             ..default()
         }
     }

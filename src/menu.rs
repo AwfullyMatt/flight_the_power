@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     loading::BackgroundAssets,
     settings::Settings,
-    ui::{Pallette, UIButton, UIButtonParentNode},
+    ui::{Pallette, UIButton, UIButtonChildNode, UIButtonParentNode},
     AppState,
 };
 
@@ -52,15 +52,6 @@ fn startup(
     // TODO: Programmatic Button Size
     let font = asset_server.load("fonts/PublicPixel.ttf");
 
-    let child_node = Node {
-        width: Val::Px(320.0),
-        height: Val::Px(115.0),
-        border: UiRect::all(Val::Px(10.0)),
-        justify_content: JustifyContent::Center,
-        align_items: AlignItems::Center,
-        ..default()
-    };
-
     let style = (
         BorderColor(Pallette::Black.srgb()),
         BorderRadius::all(Val::Percent(10.0)),
@@ -68,7 +59,7 @@ fn startup(
     );
 
     commands
-        .spawn((UIButtonParentNode::node(), CleanupMainMenu))
+        .spawn((UIButtonParentNode::default(), CleanupMainMenu))
         .with_children(|parent| {
             for i in 0..3 {
                 let text: Text = match i {
@@ -83,7 +74,14 @@ fn startup(
                 };
 
                 parent
-                    .spawn((child_node.clone(), Button, mmb, UIButton, style))
+                    .spawn((
+                        UIButtonChildNode::default(),
+                        UIButtonChildNode::marker(),
+                        Button,
+                        mmb,
+                        UIButton,
+                        style,
+                    ))
                     .with_child((
                         text,
                         TextFont {

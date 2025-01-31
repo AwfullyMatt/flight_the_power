@@ -4,7 +4,7 @@ use std::io::Result;
 
 use crate::{
     save::{format_load, format_save, Saveable},
-    ui::{Pallette, UIButton},
+    ui::{Pallette, UIButton, UIButtonChildNode, UIButtonParentNode},
     AppState,
 };
 
@@ -106,28 +106,12 @@ pub enum SettingsMenuButton {
     Sd,
     Hd,
     Uhd,
+    Back,
 }
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // TODO: Programmatic Button Size
     let font = asset_server.load("fonts/PublicPixel.ttf");
-    let parent_node = Node {
-        width: Val::Percent(100.0),
-        height: Val::Percent(100.0),
-        align_items: AlignItems::Center,
-        justify_content: JustifyContent::SpaceEvenly,
-        flex_direction: FlexDirection::Row,
-        ..default()
-    };
-
-    let child_node = Node {
-        width: Val::Px(320.0),
-        height: Val::Px(115.0),
-        border: UiRect::all(Val::Px(10.0)),
-        justify_content: JustifyContent::Center,
-        align_items: AlignItems::Center,
-        ..default()
-    };
 
     let style = (
         BorderColor(Pallette::Black.srgb()),
@@ -135,18 +119,25 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         BackgroundColor(Pallette::Lighter.srgb()),
     );
 
+    // SPAWN RESOLUTION SETTINGS NODE
     commands
-        .spawn((parent_node, CleanupSettingsMenu))
+        .spawn((
+            UIButtonParentNode::new(100.0, 33.0, 0.0),
+            UIButtonParentNode::marker(),
+            CleanupSettingsMenu,
+        ))
         .with_children(|parent| {
-            parent.spawn(child_node.clone()).with_child((
-                Text::new("RESOLUTION"),
-                TextFont {
-                    font: font.clone(),
-                    font_size: 50.0,
-                    ..default()
-                },
-                TextColor(Pallette::Black.srgb()),
-            ));
+            parent
+                .spawn((UIButtonChildNode::default(), UIButtonChildNode::marker()))
+                .with_child((
+                    Text::new("RESOLUTION"),
+                    TextFont {
+                        font: font.clone(),
+                        font_size: 50.0,
+                        ..default()
+                    },
+                    TextColor(Pallette::Black.srgb()),
+                ));
 
             for i in 0..3 {
                 let text: Text = match i {
@@ -161,7 +152,14 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
                 };
 
                 parent
-                    .spawn((child_node.clone(), Button, smb, UIButton, style))
+                    .spawn((
+                        UIButtonChildNode::default(),
+                        UIButtonChildNode::marker(),
+                        Button,
+                        smb,
+                        UIButton,
+                        style,
+                    ))
                     .with_child((
                         text,
                         TextFont {
@@ -173,6 +171,35 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
                     ));
             }
         });
+
+    // SPAWN BACK BUTTON NODE
+    commands
+        .spawn((
+            UIButtonParentNode::new(100.0, 33.0, 70.0),
+            UIButtonParentNode::marker(),
+            CleanupSettingsMenu,
+        ))
+        .with_children(|parent| {
+            parent
+                .spawn((
+                    UIButtonChildNode::default(),
+                    UIButtonChildNode::marker(),
+                    Button,
+                    SettingsMenuButton::Back,
+                    UIButton,
+                    style,
+                ))
+                .with_child((
+                    Text::new("BACK"),
+                    TextFont {
+                        font: font.clone(),
+                        font_size: 33.0,
+                        ..default()
+                    },
+                    TextColor(Pallette::Black.srgb()),
+                ));
+        });
+
     info!("[SPAWNED] Settings Menu Entities.");
 }
 
@@ -185,6 +212,7 @@ fn cleanup(mut commands: Commands, query_cleanup: Query<Entity, With<CleanupSett
 
 fn settings_button_interaction(
     mut settings: ResMut<Settings>,
+    mut next_state: ResMut<NextState<AppState>>,
     mut interaction_query: Query<
         (&Interaction, &SettingsMenuButton),
         (Changed<Interaction>, With<SettingsMenuButton>),
@@ -206,6 +234,10 @@ fn settings_button_interaction(
                 Uhd => {
                     settings.set_resolution(Resolution::Uhd);
                     info!("[MODIFIED] Resolution - {smb:?}");
+                }
+                Back => {
+                    next_state.set(AppState::Menu);
+                    info!("[MODIFIED] AppState - Menu");
                 }
             }
         }
