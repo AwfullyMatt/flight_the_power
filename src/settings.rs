@@ -1,8 +1,10 @@
 use bevy::prelude::*;
+use rand::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::io::Result;
 
 use crate::{
+    loading::DogAssets,
     save::{format_load, format_save, Saveable},
     ui::{Pallette, UIButton, UIButtonChildNode, UIButtonParentNode},
     AppState,
@@ -107,6 +109,7 @@ pub enum SettingsMenuButton {
     Hd,
     Uhd,
     Back,
+    Dog,
 }
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -172,6 +175,34 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             }
         });
 
+    // SPAWN DOG
+    commands
+        .spawn((
+            UIButtonParentNode::new(100.0, 33.0, 34.0),
+            UIButtonParentNode::marker(),
+            CleanupSettingsMenu,
+        ))
+        .with_children(|parent| {
+            parent
+                .spawn((
+                    UIButtonChildNode::default(),
+                    UIButtonChildNode::marker(),
+                    Button,
+                    SettingsMenuButton::Dog,
+                    UIButton,
+                    style,
+                ))
+                .with_child((
+                    Text::new("DOG"),
+                    TextFont {
+                        font: font.clone(),
+                        font_size: 33.0,
+                        ..default()
+                    },
+                    TextColor(Pallette::Black.srgb()),
+                ));
+        });
+
     // SPAWN BACK BUTTON NODE
     commands
         .spawn((
@@ -211,7 +242,10 @@ fn cleanup(mut commands: Commands, query_cleanup: Query<Entity, With<CleanupSett
 }
 
 fn settings_button_interaction(
+    dog_assets: Res<DogAssets>,
+    query_window: Query<&Window>,
     mut settings: ResMut<Settings>,
+    mut commands: Commands,
     mut next_state: ResMut<NextState<AppState>>,
     mut interaction_query: Query<
         (&Interaction, &SettingsMenuButton),
@@ -238,6 +272,21 @@ fn settings_button_interaction(
                 Back => {
                     next_state.set(AppState::Menu);
                     info!("[MODIFIED] AppState - Menu");
+                }
+                Dog => {
+                    if let Ok(window) = query_window.get_single() {
+                        let mut rng = rand::rng();
+
+                        commands.spawn((
+                            Sprite::from_image(dog_assets.sprite_dog.clone()),
+                            Transform::from_xyz(
+                                rng.random_range(-window.width() / 2.0..window.width() / 2.0),
+                                rng.random_range(-window.height() / 2.0..window.height() / 2.0),
+                                5.0,
+                            ),
+                            CleanupSettingsMenu,
+                        ));
+                    }
                 }
             }
         }
@@ -274,5 +323,3 @@ fn escape_to_menu(
         info!("[MODIFIED] Appstate >> Settings");
     }
 }
-
-// TODO: Physical Back Button, Monitor Selection Functionality

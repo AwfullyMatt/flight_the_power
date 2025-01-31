@@ -14,6 +14,7 @@ impl Plugin for LoadingPlugin {
             LoadingState::new(AppState::Loading)
                 .continue_to_state(AppState::Menu)
                 .load_collection::<BackgroundAssets>()
+                .load_collection::<DogAssets>()
                 .load_collection::<MusicAssets>()
                 .load_collection::<PowerAssets>(),
         )
@@ -47,6 +48,13 @@ pub struct BackgroundAssets {
 
     #[asset(path = "sprites/backgrounds/room.png")]
     pub room_background: Handle<Image>,
+}
+
+#[allow(dead_code)] // TODO:
+#[derive(AssetCollection, Resource)]
+pub struct DogAssets {
+    #[asset(path = "sprites/dog/kohaku.png")]
+    pub sprite_dog: Handle<Image>,
 }
 
 #[allow(dead_code)] // TODO:
