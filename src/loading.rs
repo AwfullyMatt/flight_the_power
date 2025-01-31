@@ -66,6 +66,9 @@ pub struct PowerAssets {
 #[allow(dead_code)] // TODO:
 #[derive(AssetCollection, Resource)]
 pub struct MusicAssets {
-    #[asset(path = "audio/windless_slopes.ogg")] //TODO: This is placeholder non-DMCA audio
+    #[asset(path = "audio/windless_slopes.ogg")]
+    //TODO: This is placeholder non-DMCA audio
+    // https://creativecommons.org/licenses/by/3.0/
+    // from RPG Asset Pack - Soundtrack by Allan Oliveira
     pub title_music: Handle<AudioSource>,
 }
