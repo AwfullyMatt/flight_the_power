@@ -5,6 +5,8 @@ mod save;
 mod settings;
 mod ui;
 
+use std::time::Duration;
+
 use bevy::prelude::*;
 use game::GameLoopPlugin;
 use loading::LoadingPlugin;
@@ -157,5 +159,21 @@ pub struct CurrentOwned(i64);
 impl CurrentOwned {
     pub fn current_owned(&self) -> &i64 {
         &self.0
+    }
+}
+
+#[derive(Component, Clone, Deref, DerefMut, Deserialize, Serialize)]
+pub struct UnlockBound(i64);
+impl UnlockBound {
+    pub fn unlock_bound(&self) -> &i64 {
+        &self.0
+    }
+}
+
+#[derive(Component, Clone, Deref, DerefMut)]
+pub struct ProdTimer(Timer);
+impl ProdTimer {
+    pub fn new(secs: f64, mode: TimerMode) -> Self {
+        Self(Timer::new(Duration::from_secs_f64(secs), mode))
     }
 }

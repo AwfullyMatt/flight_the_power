@@ -61,12 +61,12 @@ pub struct DogAssets {
 #[allow(dead_code)] // TODO:
 #[derive(AssetCollection, Resource)]
 pub struct PowerAssets {
-    #[asset(texture_atlas_layout(tile_size_x = 32, tile_size_y = 40, columns = 10, rows = 1))]
+    #[asset(texture_atlas_layout(tile_size_x = 32, tile_size_y = 32, columns = 10, rows = 1))]
     pub power_layout: Handle<TextureAtlasLayout>,
     #[asset(path = "sprites/powers/power_atlas.png")]
     pub power_atlas: Handle<Image>,
 
-    #[asset(texture_atlas_layout(tile_size_x = 32, tile_size_y = 40, columns = 3, rows = 1))]
+    #[asset(texture_atlas_layout(tile_size_x = 32, tile_size_y = 32, columns = 3, rows = 1))]
     pub border_layout: Handle<TextureAtlasLayout>,
     #[asset(path = "sprites/powers/power_border.png")]
     pub border_atlas: Handle<Image>,

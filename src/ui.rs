@@ -217,24 +217,33 @@ impl UIButtonChildNode {
 pub struct UIButtonPowerNode;
 #[allow(dead_code)] //TODO:
 impl UIButtonPowerNode {
-    pub fn default() -> Node {
+    pub fn node() -> Node {
         Node {
             width: Val::Px(160.0),
-            height: Val::Px(200.0),
-            border: UiRect::all(Val::Px(10.0)),
+            height: Val::Px(160.0),
+            border: UiRect::all(Val::Px(0.0)),
             justify_content: JustifyContent::Center,
             align_items: AlignItems::Center,
             ..default()
         }
     }
 
-    pub fn new(w: f32, h: f32, b: f32) -> Node {
+    pub fn marker() -> Self {
+        Self
+    }
+}
+
+#[derive(Component)]
+pub struct UIButtonTextNode;
+#[allow(dead_code)] //TODO:
+impl UIButtonTextNode {
+    pub fn node() -> Node {
         Node {
-            width: Val::Percent(w),
-            height: Val::Percent(h),
-            border: UiRect::all(Val::Px(b)),
-            align_items: AlignItems::Center,
-            justify_content: JustifyContent::Center,
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            top: Val::Percent(40.0),
+            align_items: AlignItems::End,
+            justify_items: JustifyItems::End,
             ..default()
         }
     }
@@ -276,7 +285,11 @@ fn button_color_system(
             &mut BorderColor,
             &Children,
         ),
-        (Changed<Interaction>, With<UIButton>),
+        (
+            Changed<Interaction>,
+            With<UIButton>,
+            Without<UIButtonPowerNode>,
+        ),
     >,
     mut text_color_query: Query<&mut TextColor>,
 ) {

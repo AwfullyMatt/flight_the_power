@@ -9,9 +9,10 @@ use crate::{
     ui::{
         Pallette, PauseButton, PauseButtonChildNode, PauseButtonParentNode, PauseParentNode,
         PowerButton, PowerTextNode, ScreenButton, ScreenButtonNode, UIButton, UIButtonParentNode,
-        UIButtonPowerNode,
+        UIButtonPowerNode, UIButtonTextNode,
     },
-    AppState, Cost, CurrentOwned, MaxOwned, PauseState, ProdAmount, ProdRate, Title, ID,
+    AppState, Cost, CurrentOwned, MaxOwned, PauseState, ProdAmount, ProdRate, ProdTimer, Title,
+    UnlockBound, ID,
 };
 
 pub struct GameLoopPlugin;
@@ -34,6 +35,9 @@ impl Plugin for GameLoopPlugin {
                     screen_click,
                     update_power_text,
                     power_click,
+                    tick_power_timers,
+                    add_to_total_power,
+                    check_power_unlock_flags,
                 )
                     .run_if(in_state(PauseState::Unpaused)),
             )
@@ -95,6 +99,7 @@ struct PowerBundle {
     production_rate: ProdRate,
     max_owned: MaxOwned,
     current_owned: CurrentOwned,
+    unlock_bound: UnlockBound,
 }
 
 #[derive(Deref, DerefMut, Deserialize, Resource, Serialize)]
@@ -276,6 +281,7 @@ fn evr_spawn_power_button(
     query_power: Query<&ID, With<Power>>,
     mut commands: Commands,
     power_flags: Res<PowerUnlockFlags>,
+    asset_server: Res<AssetServer>,
 ) {
     for ev in evr_spawn_power_button.read() {
         // CHECK IF KEY/VALUE PAIR EXISTS
@@ -285,52 +291,83 @@ fn evr_spawn_power_button(
                 // CHECK IF POWER IS ALREADY SPAWNED
                 if !query_power.iter().any(|id| id.0 == ev.0) {
                     // SAFELY GET PARENT NODE ENTITY
-                    if let Ok(entity) = query_parent_node.get_single_mut() {
-                        // SPAWN AND INSERT POWER BUTTON
-                        let children_style = (
-                            BorderColor(Color::NONE),
-                            BorderRadius::ZERO,
-                            BackgroundColor(Color::NONE),
-                            ImageNode::from_atlas_image(
-                                power_assets.power_atlas.clone(),
-                                TextureAtlas {
-                                    layout: power_assets.power_layout.clone(),
-                                    index: ev.0,
-                                },
-                            ),
-                        );
-
-                        let grandchildren_style = (
-                            BorderColor(Color::NONE),
-                            BorderRadius::ZERO,
-                            BackgroundColor(Color::NONE),
-                            ImageNode::from_atlas_image(
-                                power_assets.border_atlas.clone(),
-                                TextureAtlas {
-                                    layout: power_assets.border_layout.clone(),
-                                    index: 0,
-                                },
-                            ),
-                        );
-
-                        let children = commands
-                            .spawn((UIButtonPowerNode::default(), Button, children_style))
-                            .id();
-                        let grandchildren = commands
-                            .spawn((
-                                UIButtonPowerNode::default(),
-                                Button,
-                                UIButton,
-                                PowerButton,
-                                ID(ev.0),
-                                grandchildren_style,
-                            ))
-                            .id();
-                        commands.entity(children).add_children(&[grandchildren]);
-                        commands.entity(entity).add_children(&[children]);
-
+                    if let Ok(parent_entity) = query_parent_node.get_single_mut() {
                         if let Some(power) = powers.0.iter().find(|power| power.id.0 == ev.0) {
-                            commands.spawn(power.clone());
+                            // SPAWN AND INSERT POWER BUTTON
+                            let zero_style = (
+                                BorderColor(Color::NONE),
+                                BorderRadius::ZERO,
+                                BackgroundColor(Color::NONE),
+                            );
+
+                            let children = (
+                                zero_style,
+                                ImageNode::from_atlas_image(
+                                    power_assets.power_atlas.clone(),
+                                    TextureAtlas {
+                                        layout: power_assets.power_layout.clone(),
+                                        index: ev.0,
+                                    },
+                                ),
+                            );
+
+                            let grandchildren = (
+                                zero_style,
+                                ImageNode::from_atlas_image(
+                                    power_assets.border_atlas.clone(),
+                                    TextureAtlas {
+                                        layout: power_assets.border_layout.clone(),
+                                        index: 0,
+                                    },
+                                ),
+                            );
+
+                            let child_entity =
+                                commands.spawn((UIButtonPowerNode::node(), children)).id();
+                            let grandchild_entity = commands
+                                .spawn((
+                                    UIButtonPowerNode::node(),
+                                    UIButtonPowerNode::marker(),
+                                    Button,
+                                    UIButton,
+                                    PowerButton,
+                                    ID(ev.0),
+                                    grandchildren,
+                                ))
+                                .id();
+
+                            let font = asset_server.load("fonts/PublicPixel.ttf");
+                            let ggce = commands
+                                .spawn((UIButtonTextNode::node(), zero_style))
+                                .with_child((
+                                    Text::new(format!(
+                                        "
+                                    COST: {}\nPROD: {}pwr/{}s
+                                    ",
+                                        power.cost.0,
+                                        power.production_amount.0,
+                                        power.production_rate.0
+                                    )),
+                                    TextFont {
+                                        font: font.clone(),
+                                        font_size: 10.0,
+                                        ..default()
+                                    },
+                                    TextColor(Pallette::Black.srgb()),
+                                ))
+                                .id();
+
+                            commands.entity(grandchild_entity).add_children(&[ggce]);
+                            commands
+                                .entity(child_entity)
+                                .add_children(&[grandchild_entity]);
+                            commands.entity(parent_entity).add_children(&[child_entity]);
+
+                            // SPAWN ACTUAL POWER BUNDLE + INSERT TIMER
+                            commands.spawn(power.clone()).insert(ProdTimer::new(
+                                power.production_rate.0,
+                                TimerMode::Repeating,
+                            ));
                         }
 
                         info!("[SPAWNED] Power + Button: {}", ev.0);
@@ -438,7 +475,7 @@ fn power_click(
                 // GRAB CORRESPONDING ENTITY + COMPONENTS
                 if power_id.0 == interaction_id.0 {
                     // MAKE SURE YOU HAVE ENOUGH POWER
-                    if total_power.0 - cost.0 > 0 {
+                    if total_power.0 - cost.0 >= 0 {
                         // MAKE SURE IT WOULD NOT PUT YOU OVER LIMIT
                         if current_owned.0 + 1 <= max_owned.0 {
                             // DO THE THING
@@ -454,6 +491,48 @@ fn power_click(
                     } else {
                         info!("[INVALID] Insufficient Power");
                     }
+                }
+            }
+        }
+    }
+}
+
+fn tick_power_timers(mut query_timer: Query<&mut ProdTimer>, time: Res<Time>) {
+    for mut timer in query_timer.iter_mut() {
+        timer.0.tick(time.delta());
+    }
+}
+
+fn add_to_total_power(
+    mut query_timer: Query<(&mut ProdTimer, &ProdAmount, &CurrentOwned, &ID)>,
+    mut total_power: ResMut<TotalPower>,
+) {
+    for (mut timer, prod_amount, current_owned, id) in query_timer.iter_mut() {
+        if timer.0.finished() {
+            let total_amount = prod_amount.0 * current_owned.0;
+            total_power.0 += total_amount;
+            timer.0.reset();
+            info!(
+                "[MODIFIED] Total Power +{} From Power: {}",
+                total_amount, id.0
+            );
+        }
+    }
+}
+
+fn check_power_unlock_flags(
+    mut power_flags: ResMut<PowerUnlockFlags>,
+    mut evw_spawn_power_button: EventWriter<SpawnPowerButton>,
+    powers: Res<Powers>,
+    total_power: Res<TotalPower>,
+) {
+    for power in powers.0.iter() {
+        if let Some(flag) = power_flags.0.get_mut(&power.id.0) {
+            if total_power.0 >= power.unlock_bound.0 {
+                if !flag.to_owned() {
+                    *flag = true;
+                    evw_spawn_power_button.send(SpawnPowerButton(power.id.0));
+                    info!("[UNLOCKED] Power ID: {}", power.id.0);
                 }
             }
         }
