@@ -119,3 +119,43 @@ impl ID {
         &self.0
     }
 }
+
+#[derive(Component, Deref, DerefMut, Deserialize, Serialize)]
+pub struct Cost(i64);
+impl Cost {
+    pub fn cost(&self) -> &i64 {
+        &self.0
+    }
+}
+
+#[derive(Component, Deref, DerefMut, Deserialize, Serialize)]
+pub struct ProdAmount(i64);
+impl Cost {
+    pub fn prod_amt(&self) -> &i64 {
+        &self.0
+    }
+}
+
+#[derive(Component, Deref, DerefMut, Deserialize, Serialize)]
+pub struct ProdRate(f64);
+impl ProdRate {
+    pub fn prod_rate(&self) -> &f64 {
+        &self.0
+    }
+}
+
+#[derive(Component, Deref, DerefMut, Deserialize, Serialize)]
+pub struct MaxOwned(i64);
+impl MaxOwned {
+    pub fn max_owned(&self) -> &i64 {
+        &self.0
+    }
+}
+
+#[derive(Component, Deref, DerefMut, Deserialize, Serialize)]
+pub struct CurrentOwned(i64);
+impl CurrentOwned {
+    pub fn current_owned(&self) -> &i64 {
+        &self.0
+    }
+}

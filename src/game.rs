@@ -1,7 +1,6 @@
-use std::io::Result;
-
 use bevy::{prelude::*, utils::hashbrown::HashMap};
 use serde::{Deserialize, Serialize};
+use std::io::Result;
 
 use crate::{
     loading::{BackgroundAssets, PowerAssets, UiAssets},
@@ -12,7 +11,7 @@ use crate::{
         PowerTextNode, ScreenButton, ScreenButtonNode, UIButton, UIButtonParentNode,
         UIButtonPowerNode,
     },
-    AppState, PauseState, Title, ID,
+    AppState, Cost, CurrentOwned, MaxOwned, PauseState, ProdAmount, ProdRate, Title, ID,
 };
 
 pub struct GameLoopPlugin;
@@ -82,10 +81,11 @@ struct PowerText;
 struct Power {
     title: Title,
     id: ID,
-    cost: i64,
-    production_amount: i64,
-    production_rate: f64,
-    max_owned: i64,
+    cost: Cost,
+    production_amount: ProdAmount,
+    production_rate: ProdRate,
+    max_owned: MaxOwned,
+    current_owned: CurrentOwned,
 }
 
 #[derive(Deref, DerefMut, Deserialize, Resource, Serialize)]
@@ -262,6 +262,7 @@ fn cleanup(mut commands: Commands, query_entity: Query<Entity, With<CleanupGame>
 fn evr_spawn_power_button(
     mut evr_spawn_power_button: EventReader<SpawnPowerButton>,
     mut query_parent_node: Query<Entity, With<UIButtonParentNode>>,
+    powers: Res<Powers>,
     power_assets: Res<PowerAssets>,
     query_power: Query<&Power>,
     mut commands: Commands,
@@ -277,7 +278,6 @@ fn evr_spawn_power_button(
                     // SAFELY GET PARENT NODE ENTITY
                     if let Ok(entity) = query_parent_node.get_single_mut() {
                         // SPAWN AND INSERT POWER BUTTON
-
                         let children_style = (
                             BorderColor(Color::NONE),
                             BorderRadius::ZERO,
@@ -317,7 +317,7 @@ fn evr_spawn_power_button(
                         commands.entity(children).add_children(&[grandchildren]);
                         commands.entity(entity).add_children(&[children]);
 
-                        info!("[SPAWNED] Power Button: {}", ev.0);
+                        info!("[SPAWNED] Power + Button: {}", ev.0);
                     } else {
                         info!("[ERROR] Button Parent Node Not Spawned.");
                     }
