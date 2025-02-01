@@ -31,6 +31,9 @@ pub struct ScreenButton;
 pub struct PauseButton;
 
 #[derive(Component)]
+pub struct PowerButton;
+
+#[derive(Component)]
 pub struct PauseParentNode;
 impl PauseParentNode {
     pub fn default() -> Node {

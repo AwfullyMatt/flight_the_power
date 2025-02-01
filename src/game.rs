@@ -8,7 +8,7 @@ use crate::{
     settings::Settings,
     ui::{
         Pallette, PauseButton, PauseButtonChildNode, PauseButtonParentNode, PauseParentNode,
-        PowerTextNode, ScreenButton, ScreenButtonNode, UIButton, UIButtonParentNode,
+        PowerButton, PowerTextNode, ScreenButton, ScreenButtonNode, UIButton, UIButtonParentNode,
         UIButtonPowerNode,
     },
     AppState, Cost, CurrentOwned, MaxOwned, PauseState, ProdAmount, ProdRate, Title, ID,
@@ -29,7 +29,12 @@ impl Plugin for GameLoopPlugin {
             .add_systems(Update, pause_click.run_if(in_state(AppState::Playing)))
             .add_systems(
                 Update,
-                (evr_spawn_power_button, screen_click, update_power_text)
+                (
+                    evr_spawn_power_button,
+                    screen_click,
+                    update_power_text,
+                    power_click,
+                )
                     .run_if(in_state(PauseState::Unpaused)),
             )
             .insert_resource(
@@ -74,13 +79,13 @@ impl Saveable for TotalPower {
     }
 }
 
-#[derive(Component, Deserialize, Serialize)]
+#[derive(Component, Clone, Deserialize, Serialize)]
 struct Power;
 
 #[derive(Component, Deserialize, Serialize)]
 struct PowerText;
 
-#[derive(Bundle, Deserialize, Serialize)]
+#[derive(Bundle, Clone, Deserialize, Serialize)]
 struct PowerBundle {
     power: Power,
     title: Title,
@@ -307,7 +312,6 @@ fn evr_spawn_power_button(
                                 },
                             ),
                         );
-                        let power = powers.0.iter().find(|power| power.id.0 == ev.0).unwrap();
 
                         let children = commands
                             .spawn((UIButtonPowerNode::default(), Button, children_style))
@@ -317,11 +321,17 @@ fn evr_spawn_power_button(
                                 UIButtonPowerNode::default(),
                                 Button,
                                 UIButton,
+                                PowerButton,
+                                ID(ev.0),
                                 grandchildren_style,
                             ))
                             .id();
                         commands.entity(children).add_children(&[grandchildren]);
                         commands.entity(entity).add_children(&[children]);
+
+                        if let Some(power) = powers.0.iter().find(|power| power.id.0 == ev.0) {
+                            commands.spawn(power.clone());
+                        }
 
                         info!("[SPAWNED] Power + Button: {}", ev.0);
                     } else {
@@ -413,5 +423,39 @@ fn pause_cleanup(mut commands: Commands, query_entity: Query<Entity, With<Cleanu
     for entity in query_entity.iter() {
         commands.entity(entity).despawn_recursive();
         info!("[DESPAWNED] Pause Entities");
+    }
+}
+
+fn power_click(
+    query_interaction: Query<(&Interaction, &ID), (Changed<Interaction>, With<PowerButton>)>,
+    mut query_power: Query<(&ID, &Cost, &MaxOwned, &mut CurrentOwned), With<Power>>,
+    mut total_power: ResMut<TotalPower>,
+) {
+    for (interaction, interaction_id) in &query_interaction {
+        // ONLY RUN IF A POWER BUTTON IS PRESSED
+        if *interaction == Interaction::Pressed {
+            for (power_id, cost, max_owned, mut current_owned) in query_power.iter_mut() {
+                // GRAB CORRESPONDING ENTITY + COMPONENTS
+                if power_id.0 == interaction_id.0 {
+                    // MAKE SURE YOU HAVE ENOUGH POWER
+                    if total_power.0 - cost.0 > 0 {
+                        // MAKE SURE IT WOULD NOT PUT YOU OVER LIMIT
+                        if current_owned.0 + 1 <= max_owned.0 {
+                            // DO THE THING
+                            total_power.0 -= cost.0;
+                            current_owned.0 += 1;
+                            info!(
+                                "[MODIFIED] Current Owned -- ID: {} >> Amt: {}",
+                                power_id.0, current_owned.0
+                            );
+                        } else {
+                            info!("[INVALID] Maximum Already Owned");
+                        }
+                    } else {
+                        info!("[INVALID] Insufficient Power");
+                    }
+                }
+            }
+        }
     }
 }
