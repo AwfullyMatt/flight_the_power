@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::PauseState;
+
 pub struct UIPlugin;
 impl Plugin for UIPlugin {
     fn name(&self) -> &str {
@@ -7,7 +9,15 @@ impl Plugin for UIPlugin {
     }
 
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (button_color_system, button_atlas_system));
+        app.add_systems(
+            Update,
+            (button_color_system, button_atlas_system_unpaused)
+                .run_if(not(in_state(PauseState::Paused))),
+        )
+        .add_systems(
+            Update,
+            button_atlas_system_paused.run_if(in_state(PauseState::Paused)),
+        );
     }
 }
 
@@ -15,12 +25,137 @@ impl Plugin for UIPlugin {
 pub struct UIButton;
 
 #[derive(Component)]
+pub struct ScreenButton;
+
+#[derive(Component)]
+pub struct PauseButton;
+
+#[derive(Component)]
+pub struct PauseParentNode;
+impl PauseParentNode {
+    pub fn default() -> Node {
+        Node {
+            width: Val::Percent(100.0),
+            height: Val::Percent(70.0),
+            top: Val::Percent(15.0),
+            left: Val::Percent(0.0),
+            align_items: AlignItems::Center,
+            align_content: AlignContent::Center,
+            justify_content: JustifyContent::Center,
+            ..default()
+        }
+    }
+    pub fn marker() -> Self {
+        Self
+    }
+}
+
+#[derive(Component)]
+pub struct PauseChildNode;
+impl PauseChildNode {
+    pub fn default() -> Node {
+        Node {
+            width: Val::Percent(40.0),
+            height: Val::Percent(20.0),
+            top: Val::Percent(80.0),
+            left: Val::Percent(60.0),
+            align_items: AlignItems::Center,
+            align_content: AlignContent::Center,
+            justify_content: JustifyContent::Center,
+            ..default()
+        }
+    }
+    pub fn marker() -> Self {
+        Self
+    }
+}
+
+#[derive(Component)]
+pub struct PauseButtonParentNode;
+impl PauseButtonParentNode {
+    pub fn default() -> Node {
+        Node {
+            width: Val::Px(60.0),
+            height: Val::Px(60.0),
+            top: Val::Percent(3.0),
+            left: Val::Percent(95.0),
+            align_items: AlignItems::Center,
+            align_content: AlignContent::Center,
+            justify_content: JustifyContent::Center,
+            ..default()
+        }
+    }
+    pub fn marker() -> Self {
+        Self
+    }
+}
+
+#[derive(Component)]
+pub struct PauseButtonChildNode;
+impl PauseButtonChildNode {
+    pub fn default() -> Node {
+        Node {
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            align_items: AlignItems::Center,
+            align_content: AlignContent::Center,
+            justify_content: JustifyContent::Center,
+            ..default()
+        }
+    }
+    pub fn marker() -> Self {
+        Self
+    }
+}
+
+#[derive(Component)]
+pub struct PowerTextNode;
+impl PowerTextNode {
+    pub fn default() -> Node {
+        Node {
+            width: Val::Percent(100.0),
+            height: Val::Percent(10.0),
+            top: Val::Percent(5.0),
+            left: Val::Percent(10.0),
+            right: Val::Percent(10.0),
+            align_items: AlignItems::Center,
+            align_content: AlignContent::Center,
+            justify_content: JustifyContent::Center,
+            ..default()
+        }
+    }
+    pub fn marker() -> Self {
+        Self
+    }
+}
+
+#[derive(Component)]
+pub struct ScreenButtonNode;
+impl ScreenButtonNode {
+    pub fn default() -> Node {
+        Node {
+            width: Val::Percent(80.0),
+            height: Val::Percent(65.0),
+            top: Val::Percent(10.0),
+            left: Val::Percent(10.0),
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::FlexStart,
+            flex_direction: FlexDirection::Column,
+            ..default()
+        }
+    }
+    pub fn marker() -> Self {
+        Self
+    }
+}
+
+#[derive(Component)]
 pub struct UIButtonParentNode;
 impl UIButtonParentNode {
     pub fn default() -> Node {
         Node {
             width: Val::Percent(100.0),
-            height: Val::Percent(33.0),
+            height: Val::Percent(30.0),
             top: Val::Percent(70.0),
             align_items: AlignItems::Center,
             justify_content: JustifyContent::SpaceEvenly,
@@ -164,10 +299,37 @@ fn button_color_system(
     }
 }
 
-fn button_atlas_system(
+fn button_atlas_system_unpaused(
     mut query_interaction: Query<
         (&Interaction, &mut ImageNode),
         (Changed<Interaction>, With<UIButton>),
+    >,
+) {
+    for (interaction, mut image_node) in query_interaction.iter_mut() {
+        match *interaction {
+            Interaction::None => {
+                if let Some(atlas) = &mut image_node.texture_atlas {
+                    atlas.index = 0;
+                }
+            }
+            Interaction::Hovered => {
+                if let Some(atlas) = &mut image_node.texture_atlas {
+                    atlas.index = 1;
+                }
+            }
+            Interaction::Pressed => {
+                if let Some(atlas) = &mut image_node.texture_atlas {
+                    atlas.index = 2;
+                }
+            }
+        }
+    }
+}
+
+fn button_atlas_system_paused(
+    mut query_interaction: Query<
+        (&Interaction, &mut ImageNode),
+        (Changed<Interaction>, With<UIButton>, With<PauseButton>),
     >,
 ) {
     for (interaction, mut image_node) in query_interaction.iter_mut() {

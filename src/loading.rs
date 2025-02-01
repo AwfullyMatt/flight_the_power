@@ -16,7 +16,8 @@ impl Plugin for LoadingPlugin {
                 .load_collection::<BackgroundAssets>()
                 .load_collection::<DogAssets>()
                 .load_collection::<MusicAssets>()
-                .load_collection::<PowerAssets>(),
+                .load_collection::<PowerAssets>()
+                .load_collection::<UiAssets>(),
         )
         .add_systems(OnEnter(AppState::Loading), startup)
         .add_systems(OnExit(AppState::Loading), cleanup);
@@ -69,6 +70,20 @@ pub struct PowerAssets {
     pub border_layout: Handle<TextureAtlasLayout>,
     #[asset(path = "sprites/powers/power_border.png")]
     pub border_atlas: Handle<Image>,
+}
+
+#[allow(dead_code)] //TODO:
+#[derive(AssetCollection, Resource)]
+pub struct UiAssets {
+    #[asset(texture_atlas_layout(tile_size_x = 32, tile_size_y = 32, columns = 3, rows = 1))]
+    pub pause_border_layout: Handle<TextureAtlasLayout>,
+    #[asset(path = "sprites/ui/pause_border_atlas.png")]
+    pub pause_border_atlas: Handle<Image>,
+
+    #[asset(texture_atlas_layout(tile_size_x = 32, tile_size_y = 32, columns = 3, rows = 1))]
+    pub pause_layout: Handle<TextureAtlasLayout>,
+    #[asset(path = "sprites/ui/pause_atlas.png")]
+    pub pause_atlas: Handle<Image>,
 }
 
 #[allow(dead_code)] // TODO:

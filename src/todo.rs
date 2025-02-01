@@ -1,11 +1,11 @@
 //TODO: (BY PRIORITY) ((IN PROGRESS))
 //
-// Finish bedroom scene
-// Game Controls
 //
 //
 //
+//
+// UI stuff is messy
 //
 // Web
-// Save System
+//
 // Animations

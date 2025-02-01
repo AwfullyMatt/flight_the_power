@@ -8,7 +8,11 @@ use std::{
     io::{Error, ErrorKind, Result},
 };
 
-use crate::{game::PowerUnlockFlags, settings::Settings, AppState};
+use crate::{
+    game::{PowerUnlockFlags, TotalPower},
+    settings::Settings,
+    AppState,
+};
 
 pub struct SavePlugin;
 impl Plugin for SavePlugin {
@@ -59,11 +63,13 @@ fn evr_save(
     mut evr_save: EventReader<Save>,
     settings: Res<Settings>,
     power_flags: Res<PowerUnlockFlags>,
+    total_power: Res<TotalPower>,
 ) {
     for _ev in evr_save.read() {
         info!("[EVENT] [READ] Save Game");
         let _ = settings.save("settings.ron");
         let _ = power_flags.save("power_unlocks.ron");
+        let _ = total_power.save("total_power.ron");
     }
 }
 

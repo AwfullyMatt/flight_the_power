@@ -52,11 +52,13 @@ impl Plugin for GamePlugin {
             UIPlugin,
         ));
 
-        app.add_sub_state::<GameState>();
+        app.add_sub_state::<PauseState>();
 
         app.add_systems(Startup, startup);
 
         app.init_state::<AppState>();
+
+        app.init_state::<PauseState>();
 
         app.insert_resource(ClearColor(Pallette::Dark.srgb()));
     }
@@ -96,9 +98,10 @@ pub enum AppState {
 
 #[derive(SubStates, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 #[source(AppState = AppState::Playing)]
-pub enum GameState {
+pub enum PauseState {
     #[default]
-    Home,
+    Unpaused,
+    Paused,
 }
 
 #[derive(Component, Deref, DerefMut, Deserialize, Serialize)]
