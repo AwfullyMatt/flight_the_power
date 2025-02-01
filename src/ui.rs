@@ -11,12 +11,13 @@ impl Plugin for UIPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            (button_color_system, button_atlas_system_unpaused)
+            (button_color_system_unpaused, button_atlas_system_unpaused)
                 .run_if(not(in_state(PauseState::Paused))),
         )
         .add_systems(
             Update,
-            button_atlas_system_paused.run_if(in_state(PauseState::Paused)),
+            (button_color_system_paused, button_atlas_system_paused)
+                .run_if(in_state(PauseState::Paused)),
         );
     }
 }
@@ -32,6 +33,9 @@ pub struct PauseButton;
 
 #[derive(Component)]
 pub struct PowerButton;
+
+#[derive(Component)]
+pub struct SaveExitButton;
 
 #[derive(Component)]
 pub struct PauseParentNode;
@@ -155,11 +159,11 @@ impl ScreenButtonNode {
 #[derive(Component)]
 pub struct UIButtonParentNode;
 impl UIButtonParentNode {
-    pub fn default() -> Node {
+    pub fn node() -> Node {
         Node {
             width: Val::Percent(100.0),
             height: Val::Percent(30.0),
-            top: Val::Percent(70.0),
+            top: Val::Percent(75.0),
             align_items: AlignItems::Center,
             justify_content: JustifyContent::SpaceEvenly,
             ..default()
@@ -186,7 +190,7 @@ impl UIButtonParentNode {
 pub struct UIButtonChildNode;
 #[allow(dead_code)] //TODO:
 impl UIButtonChildNode {
-    pub fn default() -> Node {
+    pub fn node() -> Node {
         Node {
             width: Val::Px(320.0),
             height: Val::Px(115.0),
@@ -234,16 +238,19 @@ impl UIButtonPowerNode {
 }
 
 #[derive(Component)]
-pub struct UIButtonTextNode;
+pub struct UiButtonInfoNode;
 #[allow(dead_code)] //TODO:
-impl UIButtonTextNode {
+impl UiButtonInfoNode {
     pub fn node() -> Node {
         Node {
             width: Val::Percent(100.0),
             height: Val::Percent(100.0),
-            top: Val::Percent(40.0),
-            align_items: AlignItems::End,
-            justify_items: JustifyItems::End,
+            bottom: Val::Percent(75.0),
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Center,
+            justify_items: JustifyItems::Center,
+            align_content: AlignContent::Center,
+            justify_content: JustifyContent::Center,
             ..default()
         }
     }
@@ -277,7 +284,7 @@ impl Pallette {
     }
 }
 
-fn button_color_system(
+fn button_color_system_unpaused(
     mut query_interaction: Query<
         (
             &Interaction,
@@ -288,6 +295,44 @@ fn button_color_system(
         (
             Changed<Interaction>,
             With<UIButton>,
+            Without<UIButtonPowerNode>,
+        ),
+    >,
+    mut text_color_query: Query<&mut TextColor>,
+) {
+    for (interaction, mut background_color, mut border_color, children) in &mut query_interaction {
+        let mut text_color = text_color_query.get_mut(children[0]).unwrap();
+        match *interaction {
+            Interaction::None => {
+                background_color.0 = Pallette::Lighter.srgb();
+                border_color.0 = Pallette::Black.srgb();
+                text_color.0 = Pallette::Black.srgb();
+            }
+            Interaction::Hovered => {
+                background_color.0 = Pallette::Darker.srgb();
+                border_color.0 = Pallette::Black.srgb();
+                text_color.0 = Pallette::Black.srgb();
+            }
+            Interaction::Pressed => {
+                background_color.0 = Pallette::Darker.srgb();
+                border_color.0 = Pallette::White.srgb();
+                text_color.0 = Pallette::Black.srgb();
+            }
+        }
+    }
+}
+
+fn button_color_system_paused(
+    mut query_interaction: Query<
+        (
+            &Interaction,
+            &mut BackgroundColor,
+            &mut BorderColor,
+            &Children,
+        ),
+        (
+            Changed<Interaction>,
+            With<SaveExitButton>,
             Without<UIButtonPowerNode>,
         ),
     >,

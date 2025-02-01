@@ -131,7 +131,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ))
         .with_children(|parent| {
             parent
-                .spawn((UIButtonChildNode::default(), UIButtonChildNode::marker()))
+                .spawn((UIButtonChildNode::node(), UIButtonChildNode::marker()))
                 .with_child((
                     Text::new("RESOLUTION"),
                     TextFont {
@@ -156,7 +156,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
                 parent
                     .spawn((
-                        UIButtonChildNode::default(),
+                        UIButtonChildNode::node(),
                         UIButtonChildNode::marker(),
                         Button,
                         smb,
@@ -185,7 +185,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .with_children(|parent| {
             parent
                 .spawn((
-                    UIButtonChildNode::default(),
+                    UIButtonChildNode::node(),
                     UIButtonChildNode::marker(),
                     Button,
                     SettingsMenuButton::Dog,
@@ -213,7 +213,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .with_children(|parent| {
             parent
                 .spawn((
-                    UIButtonChildNode::default(),
+                    UIButtonChildNode::node(),
                     UIButtonChildNode::marker(),
                     Button,
                     SettingsMenuButton::Back,

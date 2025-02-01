@@ -59,7 +59,7 @@ fn startup(
     );
 
     commands
-        .spawn((UIButtonParentNode::default(), CleanupMainMenu))
+        .spawn((UIButtonParentNode::node(), CleanupMainMenu))
         .with_children(|parent| {
             for i in 0..3 {
                 let text: Text = match i {
@@ -75,7 +75,7 @@ fn startup(
 
                 parent
                     .spawn((
-                        UIButtonChildNode::default(),
+                        UIButtonChildNode::node(),
                         UIButtonChildNode::marker(),
                         Button,
                         mmb,

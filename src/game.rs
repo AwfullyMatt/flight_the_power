@@ -4,13 +4,9 @@ use std::io::Result;
 
 use crate::{
     loading::{BackgroundAssets, PowerAssets, UiAssets},
-    save::{format_load, format_save, Saveable},
+    save::{format_load, format_save, Save, Saveable},
     settings::Settings,
-    ui::{
-        Pallette, PauseButton, PauseButtonChildNode, PauseButtonParentNode, PauseParentNode,
-        PowerButton, PowerTextNode, ScreenButton, ScreenButtonNode, UIButton, UIButtonParentNode,
-        UIButtonPowerNode, UIButtonTextNode,
-    },
+    ui::*,
     AppState, Cost, CurrentOwned, MaxOwned, PauseState, ProdAmount, ProdRate, ProdTimer, Title,
     UnlockBound, ID,
 };
@@ -41,6 +37,7 @@ impl Plugin for GameLoopPlugin {
                 )
                     .run_if(in_state(PauseState::Unpaused)),
             )
+            .add_systems(Update, save_button.run_if(in_state(PauseState::Paused)))
             .insert_resource(
                 PowerUnlockFlags::load("power_unlocks.ron")
                     .expect("[ERROR] Could not load power_unlocks.ron"),
@@ -90,7 +87,7 @@ struct Power;
 struct PowerText;
 
 #[derive(Bundle, Clone, Deserialize, Serialize)]
-struct PowerBundle {
+pub struct PowerBundle {
     power: Power,
     title: Title,
     id: ID,
@@ -103,7 +100,7 @@ struct PowerBundle {
 }
 
 #[derive(Deref, DerefMut, Deserialize, Resource, Serialize)]
-struct Powers(Vec<PowerBundle>);
+pub struct Powers(Vec<PowerBundle>);
 impl Saveable for Powers {
     fn save(&self, filename: &str) -> std::io::Result<()> {
         format_save(self, filename)
@@ -169,7 +166,7 @@ fn startup(
 
     // SPAWN POWER BUTTON PARENT NODE
     commands.spawn((
-        UIButtonParentNode::default(),
+        UIButtonParentNode::node(),
         UIButtonParentNode::marker(),
         CleanupGame,
     ));
@@ -337,27 +334,40 @@ fn evr_spawn_power_button(
                                 .id();
 
                             let font = asset_server.load("fonts/PublicPixel.ttf");
-                            let ggce = commands
-                                .spawn((UIButtonTextNode::node(), zero_style))
-                                .with_child((
-                                    Text::new(format!(
-                                        "
-                                    COST: {}\nPROD: {}pwr/{}s
-                                    ",
-                                        power.cost.0,
-                                        power.production_amount.0,
-                                        power.production_rate.0
-                                    )),
-                                    TextFont {
-                                        font: font.clone(),
-                                        font_size: 10.0,
-                                        ..default()
-                                    },
-                                    TextColor(Pallette::Black.srgb()),
-                                ))
+
+                            let info_text_entity = commands
+                                .spawn((UiButtonInfoNode::node(), zero_style))
+                                .with_children(|parent| {
+                                    parent.spawn((
+                                        Text::new(format!("{}", power.title.0)),
+                                        TextFont {
+                                            font: font.clone(),
+                                            font_size: 10.0,
+                                            ..default()
+                                        },
+                                        TextColor(Pallette::White.srgb()),
+                                    ));
+
+                                    parent.spawn((
+                                        Text::new(format!(
+                                            "COST: {}\nPROD: {}pwr/{}s",
+                                            power.cost.0,
+                                            power.production_amount.0,
+                                            power.production_rate.0
+                                        )),
+                                        TextFont {
+                                            font: font.clone(),
+                                            font_size: 10.0,
+                                            ..default()
+                                        },
+                                        TextColor(Pallette::Light.srgb()),
+                                    ));
+                                })
                                 .id();
 
-                            commands.entity(grandchild_entity).add_children(&[ggce]);
+                            commands
+                                .entity(grandchild_entity)
+                                .add_children(&[info_text_entity]);
                             commands
                                 .entity(child_entity)
                                 .add_children(&[grandchild_entity]);
@@ -437,6 +447,12 @@ fn pause_startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.7)),
     );
 
+    let children_style = (
+        (BorderColor(Pallette::Black.srgb())),
+        BorderRadius::all(Val::Percent(10.0)),
+        BackgroundColor(Pallette::Lighter.srgb()),
+    );
+
     commands
         .spawn((
             PauseParentNode::default(),
@@ -444,15 +460,34 @@ fn pause_startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             parent_style,
             CleanupPause,
         ))
-        .with_child((
-            Text::from("PAUSED"),
-            TextFont {
-                font,
-                font_size: 60.0,
-                ..default()
-            },
-            TextColor(Pallette::Lighter.srgb()),
-        ));
+        .with_children(|parent| {
+            parent.spawn((
+                Text::from("PAUSED"),
+                TextFont {
+                    font: font.clone(),
+                    font_size: 60.0,
+                    ..default()
+                },
+                TextColor(Pallette::Lighter.srgb()),
+            ));
+            parent
+                .spawn((
+                    UIButtonChildNode::node(),
+                    Button,
+                    UIButton,
+                    SaveExitButton,
+                    children_style,
+                ))
+                .with_child((
+                    Text::from("SAVE"),
+                    TextFont {
+                        font,
+                        font_size: 30.0,
+                        ..default()
+                    },
+                    TextColor(Pallette::Darker.srgb()),
+                ));
+        });
     info!("[SPAWNED] Pause Entities");
 }
 
@@ -512,10 +547,12 @@ fn add_to_total_power(
             let total_amount = prod_amount.0 * current_owned.0;
             total_power.0 += total_amount;
             timer.0.reset();
-            info!(
-                "[MODIFIED] Total Power +{} From Power: {}",
-                total_amount, id.0
-            );
+            if total_amount > 0 {
+                info!(
+                    "[MODIFIED] Total Power +{} From Power: {}",
+                    total_amount, id.0
+                );
+            }
         }
     }
 }
@@ -535,6 +572,57 @@ fn check_power_unlock_flags(
                     info!("[UNLOCKED] Power ID: {}", power.id.0);
                 }
             }
+        }
+    }
+}
+
+fn save_button(
+    mut query_interaction: Query<&Interaction, (Changed<Interaction>, With<SaveExitButton>)>,
+    mut evw_save: EventWriter<Save>,
+    mut powers: ResMut<Powers>,
+    query_powers: Query<(
+        &Power,
+        &Title,
+        &ID,
+        &Cost,
+        &ProdAmount,
+        &ProdRate,
+        &MaxOwned,
+        &CurrentOwned,
+        &UnlockBound,
+    )>,
+) {
+    for interaction in &mut query_interaction {
+        if *interaction == Interaction::Pressed {
+            for (
+                power,
+                title,
+                id,
+                cost,
+                production_amount,
+                production_rate,
+                max_owned,
+                current_owned,
+                unlock_bound,
+            ) in query_powers.iter()
+            {
+                for power_bundle in powers.0.iter_mut() {
+                    if power_bundle.id.0 == id.0 {
+                        power_bundle.power = power.to_owned();
+                        power_bundle.title.0 = title.0.to_owned();
+                        power_bundle.id.0 = id.0.to_owned();
+                        power_bundle.cost.0 = cost.0.to_owned();
+                        power_bundle.production_amount.0 = production_amount.0.to_owned();
+                        power_bundle.production_rate.0 = production_rate.0.to_owned();
+                        power_bundle.max_owned.0 = max_owned.0.to_owned();
+                        power_bundle.current_owned.0 = current_owned.0.to_owned();
+                        power_bundle.unlock_bound.0 = unlock_bound.0.to_owned();
+                    }
+
+                    info!("[MODIFIED] Power: {} -- Syncing", power_bundle.id.0);
+                }
+            }
+            evw_save.send(Save);
         }
     }
 }

@@ -1,6 +1,9 @@
 use bevy::{
     prelude::*,
-    scene::ron::{de::from_reader, ser::to_writer},
+    scene::ron::{
+        de::from_reader,
+        ser::{to_writer, to_writer_pretty, PrettyConfig},
+    },
 };
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{
@@ -9,7 +12,7 @@ use std::{
 };
 
 use crate::{
-    game::{PowerUnlockFlags, TotalPower},
+    game::{PowerUnlockFlags, Powers, TotalPower},
     settings::Settings,
     AppState,
 };
@@ -40,7 +43,8 @@ where
 {
     let path = format!("{}/ron/{}", env!("CARGO_MANIFEST_DIR"), filename);
     let file = File::create(&path)?;
-    let t = to_writer(file, t).map_err(|e| Error::new(ErrorKind::Other, e));
+    let t =
+        to_writer_pretty(file, t, PrettyConfig::new()).map_err(|e| Error::new(ErrorKind::Other, e));
     info!("[SAVED] {path}");
     t
 }
@@ -64,12 +68,14 @@ fn evr_save(
     settings: Res<Settings>,
     power_flags: Res<PowerUnlockFlags>,
     total_power: Res<TotalPower>,
+    powers: Res<Powers>,
 ) {
     for _ev in evr_save.read() {
         info!("[EVENT] [READ] Save Game");
         let _ = settings.save("settings.ron");
         let _ = power_flags.save("power_unlocks.ron");
         let _ = total_power.save("total_power.ron");
+        let _ = powers.save("powers.ron");
     }
 }
 
