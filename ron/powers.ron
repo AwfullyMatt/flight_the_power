@@ -1,6 +1,7 @@
 (
   [
     (
+      power: (),
       title: ("Default Power"),
       id: (0),
       cost: (0),
@@ -10,6 +11,7 @@
       current_owned: (0),
     ),
     (
+      power: (),
       title: ("Middle School Science Project"),
       id: (1),
       cost: (100),
@@ -19,6 +21,7 @@
       current_owned: (0),
     ),
     (
+      power: (),
       title: ("Hamster on a Wheel"),
       id: (2),
       cost: (1000),
@@ -28,6 +31,7 @@
       max_owned: (30000000), // approx population of hamsters according to some robot
     ),
     (
+      power: (),
       title: ("'Gas' Engine"),
       id: (3),
       cost: (33333),
@@ -37,6 +41,7 @@
       current_owned: (0),
     ),
     (
+      power: (),
       title: ("Portable Generator"),
       id: (4),
       cost: (242424),
@@ -46,6 +51,7 @@
       current_owned: (0),
     ),
     (
+      power: (),
       title: ("Hotwire the Neighbors"),
       id: (5),
       cost: (999999),
@@ -55,6 +61,7 @@
       current_owned: (0),
     ),
     (
+      power: (),
       title: ("Electric Eel Farm"),
       id: (6),
       cost: (2500000),
@@ -64,6 +71,7 @@
       current_owned: (0),
     ),
     (
+      power: (),
       title: ("Miniscule Hadron Collider"),
       id: (7),
       cost: (111111111),
@@ -73,6 +81,7 @@
       current_owned: (0),
     ),
     (
+      power: (),
       title: ("Luke-warm Fusion Reactor"),
       id: (8),
       cost: (987654321),
@@ -82,6 +91,7 @@
       current_owned: (0),
     ),
     (
+      power: (),
       title: ("Buttered Cat Paradox"),
       id: (9),
       cost: (1),

@@ -75,10 +75,14 @@ impl Saveable for TotalPower {
 }
 
 #[derive(Component, Deserialize, Serialize)]
-struct PowerText;
+struct Power;
 
 #[derive(Component, Deserialize, Serialize)]
-struct Power {
+struct PowerText;
+
+#[derive(Bundle, Deserialize, Serialize)]
+struct PowerBundle {
+    power: Power,
     title: Title,
     id: ID,
     cost: Cost,
@@ -89,7 +93,7 @@ struct Power {
 }
 
 #[derive(Deref, DerefMut, Deserialize, Resource, Serialize)]
-struct Powers(Vec<Power>);
+struct Powers(Vec<PowerBundle>);
 impl Saveable for Powers {
     fn save(&self, filename: &str) -> std::io::Result<()> {
         format_save(self, filename)
@@ -264,7 +268,7 @@ fn evr_spawn_power_button(
     mut query_parent_node: Query<Entity, With<UIButtonParentNode>>,
     powers: Res<Powers>,
     power_assets: Res<PowerAssets>,
-    query_power: Query<&Power>,
+    query_power: Query<&ID, With<Power>>,
     mut commands: Commands,
     power_flags: Res<PowerUnlockFlags>,
 ) {
@@ -274,7 +278,7 @@ fn evr_spawn_power_button(
             // CHECK IF POWER IS UNLOCKED
             if *v {
                 // CHECK IF POWER IS ALREADY SPAWNED
-                if !query_power.iter().any(|power| power.id.0 == ev.0) {
+                if !query_power.iter().any(|id| id.0 == ev.0) {
                     // SAFELY GET PARENT NODE ENTITY
                     if let Ok(entity) = query_parent_node.get_single_mut() {
                         // SPAWN AND INSERT POWER BUTTON
@@ -303,6 +307,8 @@ fn evr_spawn_power_button(
                                 },
                             ),
                         );
+                        let power = powers.0.iter().find(|power| power.id.0 == ev.0).unwrap();
+
                         let children = commands
                             .spawn((UIButtonPowerNode::default(), Button, children_style))
                             .id();
