@@ -33,6 +33,12 @@ fn main() {
         copy_dir_all(manifest_dir.join("ron"), &ron_dir).unwrap();
     }
 
+    let target = env::var("TARGET").unwrap();
+    if target.contains("windows") {
+        // on windows we will set our game icon as icon for the executable
+        embed_resource::compile("build/windows/icon.rc");
+    }
+
     fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> std::io::Result<()> {
         fs::create_dir_all(&dst)?;
         for entry in fs::read_dir(src)? {

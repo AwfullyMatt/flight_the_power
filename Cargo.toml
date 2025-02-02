@@ -5,13 +5,35 @@ publish = false
 authors = ["AwfullyMatt -- flightthepower@proton.me"]
 edition = "2021"
 build = "build.rs"
+exclude = ["dist", "build", "assets", "credits"]
+
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.dev]
+opt-level = 1
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true
+
+[features]
+dev = [
+    "bevy/dynamic_linking",
+]
 
 [dependencies]
 bevy = { version = "0.15.1", default-features = true }
 bevy_asset_loader = { version = "0.22.0", features = ["2d"] }
 rand = "0.9.0"
 serde = "1.0.217"
+webbrowser = { version = "1", features = ["hardened"] }
+winit = { version = "0.30", default-features = false }
+image = { version = "0.25", default-features = false }
+log = { version = "0.4", features = ["max_level_debug", "release_max_level_warn"] }
 
-[target.'cfg(target_arch = "wasm32")'.dependencies]
-console_error_panic_hook = "0.1.7"
-wasm-bindgen = "0.2.92"
+[build-dependencies]
+embed-resource = "1"
+

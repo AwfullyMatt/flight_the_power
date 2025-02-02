@@ -5,9 +5,9 @@ mod save;
 mod settings;
 mod ui;
 
-use std::time::Duration;
+use std::{io::Cursor, time::Duration};
 
-use bevy::prelude::*;
+use bevy::{prelude::*, window::PrimaryWindow, winit::WinitWindows};
 use game::GameLoopPlugin;
 use loading::LoadingPlugin;
 use menu::MenuPlugin;
@@ -15,6 +15,7 @@ use save::SavePlugin;
 use serde::{Deserialize, Serialize};
 use settings::{Settings, SettingsPlugin};
 use ui::{Pallette, UIPlugin};
+use winit::window::Icon;
 
 pub struct GamePlugin;
 impl Plugin for GamePlugin {
@@ -66,7 +67,13 @@ impl Plugin for GamePlugin {
     }
 }
 
-fn startup(mut commands: Commands, mut query_window: Query<&mut Window>, settings: Res<Settings>) {
+fn startup(
+    mut commands: Commands,
+    mut query_window: Query<&mut Window>,
+    settings: Res<Settings>,
+    windows: NonSend<WinitWindows>,
+    primary_window: Query<Entity, With<PrimaryWindow>>,
+) {
     // SPAWN CAMERA2D
     commands.spawn(Camera2d);
 
@@ -86,6 +93,22 @@ fn startup(mut commands: Commands, mut query_window: Query<&mut Window>, setting
             settings.resolution().y
         );
     }
+
+    // SET WINDOW ICON
+    let primary_entity = primary_window.single();
+    let Some(primary) = windows.get_window(primary_entity) else {
+        return;
+    };
+    let icon_buf = Cursor::new(include_bytes!(
+        "../build/macos/AppIcon.iconset/icon_256x256.png"
+    ));
+    if let Ok(image) = image::load(icon_buf, image::ImageFormat::Png) {
+        let image = image.into_rgba8();
+        let (width, height) = image.dimensions();
+        let rgba = image.into_raw();
+        let icon = Icon::from_rgba(rgba, width, height).unwrap();
+        primary.set_window_icon(Some(icon));
+    };
 }
 
 #[derive(States, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
