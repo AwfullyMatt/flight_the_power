@@ -1,6 +1,8 @@
 [package]
 name = "flightthepower"
 version = "0.1.0"
+publish = false
+authors = ["AwfullyMatt -- flightthepower@proton.me"]
 edition = "2021"
 build = "build.rs"
 
@@ -12,5 +14,4 @@ serde = "1.0.217"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = "0.1.7"
-getrandom = { version = "0.2", features = ["js"] }
-wasm-bindgen = "0.2"
+wasm-bindgen = "0.2.92"
