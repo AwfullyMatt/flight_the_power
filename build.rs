@@ -29,7 +29,7 @@ fn main() {
 
         // Copy all files from your project's assets/ to target/release/assets/
         copy_dir_all(manifest_dir.join("assets"), &assets_dir).unwrap();
-        // Copy all files from your project's ron/ to target/release/assets/
+        // Copy all files from your project's ron/ to target/release/ron/
         copy_dir_all(manifest_dir.join("ron"), &ron_dir).unwrap();
     }
 

@@ -31,7 +31,7 @@ impl Plugin for GamePlugin {
                         title: "Flight the Power".to_string(),
                         canvas: Some("#FTP".to_string()),
                         fit_canvas_to_parent: true,
-                        prevent_default_event_handling: true,
+                        prevent_default_event_handling: false,
                         window_theme: Some(bevy::window::WindowTheme::Dark),
                         resizable: false,
                         ..default()

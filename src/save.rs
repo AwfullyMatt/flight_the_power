@@ -5,6 +5,7 @@ use bevy::{
         ser::{to_writer_pretty, PrettyConfig},
     },
 };
+use directories::ProjectDirs;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use std::{
     fs::File,
@@ -41,15 +42,58 @@ pub fn format_save<'a, T>(t: &'a T, filename: &str) -> Result<()>
 where
     T: Saveable + Serialize + Deserialize<'a>,
 {
+    // Get platform-specific project directory
+    let project_dirs = ProjectDirs::from("me", "awfullymatt", "flightthepower")
+        .ok_or_else(|| Error::new(ErrorKind::Other, "Failed to find project directory"))?;
+
+    // Create save directory if it doesn't exist
+    let save_dir = project_dirs.data_dir().join("ron");
+    std::fs::create_dir_all(&save_dir)?;
+
+    // Create full file path
+    let path = save_dir.join(filename);
+    let file = File::create(&path)?;
+
+    // Rest of your serialization code remains the same
+    let t =
+        to_writer_pretty(file, t, PrettyConfig::new()).map_err(|e| Error::new(ErrorKind::Other, e));
+
+    info!("[SAVED] {}", path.display());
+    t
+}
+
+pub fn format_load<T>(filename: &str) -> Result<T>
+where
+    T: Saveable + Serialize + DeserializeOwned,
+{
+    // Get platform-specific project directory (same as in save function)
+    let project_dirs = ProjectDirs::from("me", "awfullymatt", "flightthepower")
+        .ok_or_else(|| Error::new(ErrorKind::Other, "Failed to find project directory"))?;
+
+    // Build the full load path
+    let save_dir = project_dirs.data_dir().join("ron");
+    let path = save_dir.join(filename);
+
+    let file = File::open(&path)?;
+    let t = from_reader(file).map_err(|e| Error::new(ErrorKind::Other, e));
+
+    info!("[LOADED] {}", path.display());
+    t
+}
+
+/* pub fn format_save<'a, T>(t: &'a T, filename: &str) -> Result<()>
+where
+    T: Saveable + Serialize + Deserialize<'a>,
+{
     let path = format!("{}/ron/{}", env!("CARGO_MANIFEST_DIR"), filename);
     let file = File::create(&path)?;
     let t =
         to_writer_pretty(file, t, PrettyConfig::new()).map_err(|e| Error::new(ErrorKind::Other, e));
     info!("[SAVED] {path}");
     t
-}
+} */
 
-pub fn format_load<T>(filename: &str) -> Result<T>
+/* pub fn format_load<T>(filename: &str) -> Result<T>
 where
     T: Saveable + Serialize + DeserializeOwned,
 {
@@ -58,7 +102,7 @@ where
     let t = from_reader(file).map_err(|e| Error::new(ErrorKind::Other, e));
     info!("[LOADED] {path}");
     t
-}
+} */
 
 #[derive(Event)]
 pub struct Save;

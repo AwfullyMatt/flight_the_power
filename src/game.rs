@@ -38,15 +38,9 @@ impl Plugin for GameLoopPlugin {
                     .run_if(in_state(PauseState::Unpaused)),
             )
             .add_systems(Update, save_button.run_if(in_state(PauseState::Paused)))
-            .insert_resource(
-                PowerUnlockFlags::load("power_unlocks.ron")
-                    .expect("[ERROR] Could not load power_unlocks.ron"),
-            )
-            .insert_resource(Powers::load("powers.ron").expect("[ERROR] Could not load powers.ron"))
-            .insert_resource(
-                TotalPower::load("total_power.ron")
-                    .expect("[ERROR] Could not load total_power.ron"),
-            );
+            .insert_resource(PowerUnlockFlags::load("power_unlocks.ron").unwrap_or_default())
+            .insert_resource(Powers::load("powers.ron").unwrap_or_default())
+            .insert_resource(TotalPower::load("total_power.ron").unwrap_or_default());
     }
 }
 
@@ -113,6 +107,122 @@ impl Saveable for Powers {
         format_load(filename)
     }
 }
+impl Default for Powers {
+    fn default() -> Self {
+        Self(vec![
+            PowerBundle {
+                power: Power,
+                title: Title("Default Power".into()),
+                id: ID(0),
+                cost: Cost(0),
+                production_amount: ProdAmount(1),
+                production_rate: ProdRate(1000000.0),
+                max_owned: MaxOwned(1),
+                current_owned: CurrentOwned(0),
+                unlock_bound: UnlockBound(9_223_372_036_854_775_807),
+            },
+            PowerBundle {
+                power: Power,
+                title: Title("Middle School Science Project".into()),
+                id: ID(1),
+                cost: Cost(50),
+                production_amount: ProdAmount(5),
+                production_rate: ProdRate(5.0),
+                max_owned: MaxOwned(9_223_372_036_854_775_807),
+                current_owned: CurrentOwned(0),
+                unlock_bound: UnlockBound(50),
+            },
+            PowerBundle {
+                power: Power,
+                title: Title("Hamster on a Wheel".into()),
+                id: ID(2),
+                cost: Cost(1000),
+                production_amount: ProdAmount(25),
+                production_rate: ProdRate(1.0),
+                max_owned: MaxOwned(30_000_000),
+                current_owned: CurrentOwned(0),
+                unlock_bound: UnlockBound(1000),
+            },
+            PowerBundle {
+                power: Power,
+                title: Title("\'Gas\' Engine".into()),
+                id: ID(3),
+                cost: Cost(33_333),
+                production_amount: ProdAmount(100_000),
+                production_rate: ProdRate(240.0),
+                max_owned: MaxOwned(1),
+                current_owned: CurrentOwned(0),
+                unlock_bound: UnlockBound(10_000),
+            },
+            PowerBundle {
+                power: Power,
+                title: Title("Portable Generator".into()),
+                id: ID(4),
+                cost: Cost(242_424),
+                production_amount: ProdAmount(800),
+                production_rate: ProdRate(8.0),
+                max_owned: MaxOwned(9_223_372_036_854_775_807),
+                current_owned: CurrentOwned(0),
+                unlock_bound: UnlockBound(100_000),
+            },
+            PowerBundle {
+                power: Power,
+                title: Title("Hotwire the Neighbors".into()),
+                id: ID(5),
+                cost: Cost(999_999),
+                production_amount: ProdAmount(222),
+                production_rate: ProdRate(0.5),
+                max_owned: MaxOwned(128_000_000),
+                current_owned: CurrentOwned(0),
+                unlock_bound: UnlockBound(1_000_000),
+            },
+            PowerBundle {
+                power: Power,
+                title: Title("Electric Eel Farm".into()),
+                id: ID(6),
+                cost: Cost(2_500_000),
+                production_amount: ProdAmount(45_000),
+                production_rate: ProdRate(30.0),
+                max_owned: MaxOwned(10_000_000),
+                current_owned: CurrentOwned(0),
+                unlock_bound: UnlockBound(10_000_000),
+            },
+            PowerBundle {
+                power: Power,
+                title: Title("Miniscule Hadron Collider".into()),
+                id: ID(7),
+                cost: Cost(111_111_111),
+                production_amount: ProdAmount(123_456),
+                production_rate: ProdRate(33.0),
+                max_owned: MaxOwned(123_456_789),
+                current_owned: CurrentOwned(0),
+                unlock_bound: UnlockBound(100_000_000),
+            },
+            PowerBundle {
+                power: Power,
+                title: Title("Luke-warm Fusion Reactor".into()),
+                id: ID(8),
+                cost: Cost(987_654_321),
+                production_amount: ProdAmount(9_999),
+                production_rate: ProdRate(0.1),
+                max_owned: MaxOwned(1),
+                current_owned: CurrentOwned(0),
+                unlock_bound: UnlockBound(1_000_000_000),
+            },
+            PowerBundle {
+                power: Power,
+                title: Title("Buttered Cat Paradox".into()),
+                id: ID(9),
+                cost: Cost(1),
+                production_amount: ProdAmount(1),
+                production_rate: ProdRate(0.00001),
+                max_owned: MaxOwned(999),
+                current_owned: CurrentOwned(0),
+                unlock_bound: UnlockBound(10_000_000_000),
+            },
+        ])
+    }
+}
 
 #[derive(Deserialize, Resource, Serialize)]
 pub struct PowerUnlockFlags(HashMap<usize, bool>);
@@ -126,6 +236,15 @@ impl Saveable for PowerUnlockFlags {
         Self: Sized,
     {
         format_load(filename)
+    }
+}
+impl Default for PowerUnlockFlags {
+    fn default() -> Self {
+        PowerUnlockFlags(
+            (0..10) // CREATE RANGE
+                .map(|i| (i, false)) // MAP
+                .collect(), // COLLECT
+        )
     }
 }
 

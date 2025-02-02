@@ -25,9 +25,7 @@ impl Plugin for SettingsPlugin {
             )
             .add_systems(Update, update_settings);
 
-        app.insert_resource(
-            Settings::load("settings.ron").expect("[ERROR] Could not load settings.ron"),
-        );
+        app.insert_resource(Settings::load("settings.ron").unwrap_or_default());
     }
 }
 
@@ -73,9 +71,9 @@ impl Saveable for Settings {
 #[allow(dead_code)]
 #[derive(Default, Deserialize, Serialize)]
 pub enum Resolution {
-    #[default]
     Sd, // 480p
-    Hd,  // 1080p
+    #[default]
+    Hd, // 1080p
     Uhd, // 2160p
 }
 impl Resolution {
