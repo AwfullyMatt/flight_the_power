@@ -472,8 +472,6 @@ fn pause_startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ))
         .with_children(|parent| {
             parent.spawn((
-                PauseButtonChildNode::node(),
-                PauseButtonChildNode::marker(),
                 Text::from("PAUSED"),
                 TextFont {
                     font: font.clone(),
