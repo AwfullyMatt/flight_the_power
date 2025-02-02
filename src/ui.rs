@@ -59,6 +59,7 @@ impl PauseParentNode {
 
 #[derive(Component)]
 pub struct PauseChildNode;
+#[allow(dead_code)] //TODO:
 impl PauseChildNode {
     pub fn default() -> Node {
         Node {
@@ -100,7 +101,7 @@ impl PauseButtonParentNode {
 #[derive(Component)]
 pub struct PauseButtonChildNode;
 impl PauseButtonChildNode {
-    pub fn default() -> Node {
+    pub fn node() -> Node {
         Node {
             width: Val::Percent(100.0),
             height: Val::Percent(100.0),

@@ -2,7 +2,7 @@ use bevy::{
     prelude::*,
     scene::ron::{
         de::from_reader,
-        ser::{to_writer, to_writer_pretty, PrettyConfig},
+        ser::{to_writer_pretty, PrettyConfig},
     },
 };
 use serde::{de::DeserializeOwned, Deserialize, Serialize};

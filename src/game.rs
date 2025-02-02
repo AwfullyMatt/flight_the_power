@@ -185,7 +185,7 @@ fn startup(
                 font_size,
                 ..default()
             },
-            TextColor(text_color.clone()),
+            TextColor(text_color),
             BackgroundColor(Color::NONE),
             CleanupGame,
         ))
@@ -237,11 +237,11 @@ fn startup(
         ),
     );
     let children = commands
-        .spawn((PauseButtonChildNode::default(), children_style))
+        .spawn((PauseButtonChildNode::node(), children_style))
         .id();
     let grandchildren = commands
         .spawn((
-            PauseButtonChildNode::default(),
+            PauseButtonChildNode::node(),
             PauseButtonChildNode::marker(),
             Button,
             UIButton,
@@ -339,7 +339,7 @@ fn evr_spawn_power_button(
                                 .spawn((UiButtonInfoNode::node(), zero_style))
                                 .with_children(|parent| {
                                     parent.spawn((
-                                        Text::new(format!("{}", power.title.0)),
+                                        Text::new(power.title.0.clone()),
                                         TextFont {
                                             font: font.clone(),
                                             font_size: 10.0,
@@ -361,6 +361,16 @@ fn evr_spawn_power_button(
                                             ..default()
                                         },
                                         TextColor(Pallette::Light.srgb()),
+                                    ));
+
+                                    parent.spawn((
+                                        Text::new(format!("MAX: {}", power.max_owned.0)),
+                                        TextFont {
+                                            font: font.clone(),
+                                            font_size: 10.0,
+                                            ..default()
+                                        },
+                                        TextColor(Pallette::White.srgb()),
                                     ));
                                 })
                                 .id();
@@ -462,6 +472,8 @@ fn pause_startup(mut commands: Commands, asset_server: Res<AssetServer>) {
         ))
         .with_children(|parent| {
             parent.spawn((
+                PauseButtonChildNode::node(),
+                PauseButtonChildNode::marker(),
                 Text::from("PAUSED"),
                 TextFont {
                     font: font.clone(),
@@ -473,6 +485,7 @@ fn pause_startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             parent
                 .spawn((
                     UIButtonChildNode::node(),
+                    UIButtonChildNode::marker(),
                     Button,
                     UIButton,
                     SaveExitButton,
@@ -512,7 +525,7 @@ fn power_click(
                     // MAKE SURE YOU HAVE ENOUGH POWER
                     if total_power.0 - cost.0 >= 0 {
                         // MAKE SURE IT WOULD NOT PUT YOU OVER LIMIT
-                        if current_owned.0 + 1 <= max_owned.0 {
+                        if current_owned.0 < max_owned.0 {
                             // DO THE THING
                             total_power.0 -= cost.0;
                             current_owned.0 += 1;
