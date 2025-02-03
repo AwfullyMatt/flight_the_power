@@ -33,6 +33,7 @@ impl Plugin for SettingsPlugin {
 pub struct Settings {
     resolution: Resolution,
     monitor: usize,
+    pub auto_click: bool,
 }
 impl Settings {
     pub fn set_resolution(&mut self, resolution: Resolution) {
@@ -108,6 +109,7 @@ pub enum SettingsMenuButton {
     Uhd,
     Back,
     Dog,
+    AutoClick,
 }
 
 fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
@@ -123,7 +125,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // SPAWN RESOLUTION SETTINGS NODE
     commands
         .spawn((
-            UIButtonParentNode::new(100.0, 33.0, 0.0),
+            UIButtonParentNode::new(100.0, 20.0, 0.0),
             UIButtonParentNode::marker(),
             CleanupSettingsMenu,
         ))
@@ -173,10 +175,49 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
             }
         });
 
+    commands
+        .spawn((
+            UIButtonParentNode::new(100.0, 20.0, 20.0),
+            UIButtonParentNode::marker(),
+            CleanupSettingsMenu,
+        ))
+        .with_children(|parent| {
+            parent
+                .spawn((UIButtonChildNode::node(), UIButtonChildNode::marker()))
+                .with_child((
+                    Text::new("ACCESSIBILITY"),
+                    TextFont {
+                        font: font.clone(),
+                        font_size: 50.0,
+                        ..default()
+                    },
+                    TextColor(Pallette::Black.srgb()),
+                ));
+
+            parent
+                .spawn((
+                    UIButtonChildNode::node(),
+                    UIButtonChildNode::marker(),
+                    Button,
+                    SettingsMenuButton::AutoClick,
+                    UIButton,
+                    style,
+                ))
+                .with_child((
+                    Text::new("Auto-Click"),
+                    TextFont {
+                        font: font.clone(),
+                        font_size: 33.0,
+                        ..default()
+                    },
+                    TextColor(Pallette::Black.srgb()),
+                ));
+        });
+
     // SPAWN DOG
     commands
         .spawn((
-            UIButtonParentNode::new(100.0, 33.0, 34.0),
+            UIButtonParentNode::new(100.0, 20.0, 40.0),
             UIButtonParentNode::marker(),
             CleanupSettingsMenu,
         ))
@@ -204,7 +245,7 @@ fn startup(mut commands: Commands, asset_server: Res<AssetServer>) {
     // SPAWN BACK BUTTON NODE
     commands
         .spawn((
-            UIButtonParentNode::new(100.0, 33.0, 70.0),
+            UIButtonParentNode::new(100.0, 20.0, 80.0),
             UIButtonParentNode::marker(),
             CleanupSettingsMenu,
         ))
@@ -286,6 +327,10 @@ fn settings_button_interaction(
                         ));
                     }
                 }
+                AutoClick => {
+                    settings.auto_click = !settings.auto_click;
+                    info!("[MODIFIED] Settings: Auto-Click >> {}", settings.auto_click);
+                }
             }
         }
     }
@@ -295,18 +340,22 @@ fn update_settings(settings: Res<Settings>, mut query_window: Query<&mut Window>
     if settings.is_changed() {
         if let Ok(mut window) = query_window.get_single_mut() {
             // SET WINDOW RESOLUTION
-            window
-                .resolution
-                .set(settings.resolution().x, settings.resolution().y);
-            // SET MONITOR SELECTION
-            window
+            if window.resolution.width() != settings.resolution.vec2().x
+                && window.resolution.height() != settings.resolution.vec2().y
+            {
+                window
+                    .resolution
+                    .set(settings.resolution().x, settings.resolution().y);
+                // SET MONITOR SELECTION
+                /* window
                 .position
-                .center(MonitorSelection::Index(settings.monitor_index()));
-            info!(
-                "[INITIALIZED] Window Resolution : ({},{})",
-                settings.resolution().x,
-                settings.resolution().y
-            );
+                .center(MonitorSelection::Index(settings.monitor_index())); */
+                info!(
+                    "[INITIALIZED] Window Resolution : ({},{})",
+                    settings.resolution().x,
+                    settings.resolution().y
+                );
+            }
         }
     }
 }

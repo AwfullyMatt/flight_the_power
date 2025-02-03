@@ -1,6 +1,6 @@
 use bevy::{prelude::*, utils::hashbrown::HashMap};
 use serde::{Deserialize, Serialize};
-use std::io::Result;
+use std::{io::Result, time::Duration};
 
 use crate::{
     loading::{BackgroundAssets, PowerAssets, UiAssets},
@@ -34,6 +34,7 @@ impl Plugin for GameLoopPlugin {
                     tick_power_timers,
                     add_to_total_power,
                     check_power_unlock_flags,
+                    auto_click,
                 )
                     .run_if(in_state(PauseState::Unpaused)),
             )
@@ -73,6 +74,9 @@ impl Saveable for TotalPower {
         format_load(filename)
     }
 }
+
+#[derive(Component, Clone)]
+struct AutoClick(Timer);
 
 #[derive(Component, Clone, Deserialize, Serialize)]
 struct Power;
@@ -373,6 +377,7 @@ fn startup(
 
     info!("[SPAWNED] Game Nodes");
 
+    // SPAWN POWER BUTTONS ALREADY UNLOCKED
     for i in 0..power_flags.0.len() {
         if let Some((_k, v)) = power_flags.0.get_key_value(&i) {
             if *v {
@@ -380,6 +385,12 @@ fn startup(
             }
         }
     }
+
+    // SPAWN AUTO-CLICK TIMER
+    commands.spawn(AutoClick(Timer::new(
+        Duration::from_secs_f64(0.125),
+        TimerMode::Repeating,
+    )));
 }
 
 fn cleanup(mut commands: Commands, query_entity: Query<Entity, With<CleanupGame>>) {
@@ -753,6 +764,24 @@ fn save_button(
                 }
             }
             evw_save.send(Save);
+        }
+    }
+}
+
+fn auto_click(
+    time: Res<Time>,
+    settings: Res<Settings>,
+    mut total_power: ResMut<TotalPower>,
+    mut query_auto_click: Query<&mut AutoClick>,
+) {
+    if settings.auto_click {
+        if let Ok(mut auto_click) = query_auto_click.get_single_mut() {
+            auto_click.0.tick(time.delta());
+            if auto_click.0.finished() {
+                total_power.0 += 1;
+                auto_click.0.reset();
+                info!("[EVENT] Auto-Click");
+            }
         }
     }
 }
