@@ -314,13 +314,13 @@ fn settings_button_interaction(
                 }
                 Dog => {
                     if let Ok(window) = query_window.get_single() {
-                        let mut rng = rand::rng();
+                        let mut rng = rand::thread_rng();
 
                         commands.spawn((
                             Sprite::from_image(dog_assets.sprite_dog.clone()),
                             Transform::from_xyz(
-                                rng.random_range(-window.width() / 2.0..window.width() / 2.0),
-                                rng.random_range(-window.height() / 2.0..window.height() / 2.0),
+                                rng.gen_range(-window.width() / 2.0..window.width() / 2.0),
+                                rng.gen_range(-window.height() / 2.0..window.height() / 2.0),
                                 5.0,
                             ),
                             CleanupSettingsMenu,
